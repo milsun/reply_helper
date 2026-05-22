@@ -71,19 +71,55 @@ body {
 .icon-btn:hover { background: var(--surface); color: var(--ink); border-color: var(--border2); }
 .icon-btn svg { width: 13px; height: 13px; }
 
-.header-actions { display: flex; gap: 4px; align-items: center; }
+.header-actions { display: flex; gap: 8px; align-items: center; }
 
-.thinking-toggle.active {
+/* ── Toggle Switch ──────────────────────── */
+
+.toggle {
+  display: flex; align-items: center; gap: 7px;
+  cursor: pointer; user-select: none;
+}
+
+.toggle-label {
+  font-size: 11px; font-weight: 600; color: var(--text2);
+  letter-spacing: -0.01em; transition: color 0.2s var(--ease);
+}
+
+.toggle-switch {
+  position: relative; width: 32px; height: 18px;
+}
+
+.toggle-switch input {
+  position: absolute; opacity: 0; width: 0; height: 0;
+}
+
+.toggle-track {
+  display: block; width: 100%; height: 100%;
+  background: var(--surface3); border-radius: 100px;
+  transition: background 0.2s var(--ease);
+  position: relative;
+}
+
+.toggle-track::after {
+  content: '';
+  position: absolute; top: 2px; left: 2px;
+  width: 14px; height: 14px;
+  background: #fff; border-radius: 50%;
+  transition: transform 0.2s var(--ease);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.toggle-switch input:checked + .toggle-track {
+  background: var(--ink);
+}
+
+.toggle-switch input:checked + .toggle-track::after {
+  transform: translateX(14px);
+}
+
+.toggle:has(input:checked) .toggle-label {
   color: var(--ink);
-  background: var(--ink-l);
-  border-color: var(--border2);
 }
-.thinking-toggle .dot-indicator {
-  position: absolute; bottom: 3px; right: 4px;
-  width: 4px; height: 4px; border-radius: 50%;
-  background: transparent; transition: background 0.2s var(--ease);
-}
-.thinking-toggle.active .dot-indicator { background: var(--ink); }
 
 /* ── States ─────────────────────────────── */
 

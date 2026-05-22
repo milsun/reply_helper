@@ -8,7 +8,7 @@ const els = {
   loadingStatus: $('loading-status'), suggestionsList: $('suggestions-list'),
   regenerateBtn: $('regenerate-btn'), newCaptureBtn: $('new-capture-btn'),
   errorMessage: $('error-message'), retryBtn: $('retry-btn'), settingsBtn: $('settings-btn'),
-  thinkingBtn: $('thinking-btn')
+  thinkingCheck: $('thinking-check')
 };
 
 function showState(state) {
@@ -282,14 +282,11 @@ els.newCaptureBtn.addEventListener('click', () => { lastScreenshot = lastPointer
 els.retryBtn.addEventListener('click', () => captureAndSuggest(lastPointer));
 els.settingsBtn.addEventListener('click', () => chrome.runtime.openOptionsPage());
 
-els.thinkingBtn.addEventListener('click', async () => {
-  const current = await get(STORAGE_KEYS.ENABLE_THINKING);
-  const next = !current;
-  await set(STORAGE_KEYS.ENABLE_THINKING, next);
-  els.thinkingBtn.classList.toggle('active', next);
+els.thinkingCheck.addEventListener('change', async () => {
+  await set(STORAGE_KEYS.ENABLE_THINKING, els.thinkingCheck.checked);
 });
 
 document.addEventListener('DOMContentLoaded', async () => {
-  els.thinkingBtn.classList.toggle('active', await get(STORAGE_KEYS.ENABLE_THINKING));
+  els.thinkingCheck.checked = await get(STORAGE_KEYS.ENABLE_THINKING);
   if (!await checkPending()) showState('empty');
 });
