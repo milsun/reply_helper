@@ -1,4 +1,4 @@
-let lastScreenshot = null, lastPointer = '', lastResult = null, selectedSuggestion = null;
+let lastScreenshot = null, lastPointer = '', lastResult = null, selectedSuggestion = null, captureStartTime = 0;
 
 const $ = id => document.getElementById(id);
 const els = {
@@ -210,6 +210,7 @@ async function captureAndSuggest(pointer) {
   if (provider !== 'local' && !apiKey) { showError('API key needed.'); return; }
 
   showState('loading');
+  captureStartTime = Date.now();
   els.loadingStatus.textContent = 'Capturing screenshot...';
   setStep('capture');
 
@@ -251,6 +252,7 @@ async function captureAndSuggest(pointer) {
     lastPointer = pointer;
     lastResult = result;
     renderCards(result);
+    $('latency').textContent = ((Date.now() - captureStartTime) / 1000).toFixed(1) + 's';
     showState('results');
     addRecentCapture({ pointer, suggestionCount: (result.suggestions || []).length, styleProfile: result.style_profile || null });
   } catch (e) { showError(e.message || 'Something went wrong.'); }
