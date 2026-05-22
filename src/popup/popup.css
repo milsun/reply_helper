@@ -71,6 +71,20 @@ body {
 .icon-btn:hover { background: var(--surface); color: var(--ink); border-color: var(--border2); }
 .icon-btn svg { width: 13px; height: 13px; }
 
+.header-actions { display: flex; gap: 4px; align-items: center; }
+
+.thinking-toggle.active {
+  color: var(--ink);
+  background: var(--ink-l);
+  border-color: var(--border2);
+}
+.thinking-toggle .dot-indicator {
+  position: absolute; bottom: 3px; right: 4px;
+  width: 4px; height: 4px; border-radius: 50%;
+  background: transparent; transition: background 0.2s var(--ease);
+}
+.thinking-toggle.active .dot-indicator { background: var(--ink); }
+
 /* ── States ─────────────────────────────── */
 
 .state { display: none; flex-direction: column; }

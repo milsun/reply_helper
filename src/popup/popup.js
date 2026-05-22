@@ -7,7 +7,8 @@ const els = {
   captureBtn: $('capture-btn'), pointerInput: $('pointer-input'),
   loadingStatus: $('loading-status'), suggestionsList: $('suggestions-list'),
   regenerateBtn: $('regenerate-btn'), newCaptureBtn: $('new-capture-btn'),
-  errorMessage: $('error-message'), retryBtn: $('retry-btn'), settingsBtn: $('settings-btn')
+  errorMessage: $('error-message'), retryBtn: $('retry-btn'), settingsBtn: $('settings-btn'),
+  thinkingBtn: $('thinking-btn')
 };
 
 function showState(state) {
@@ -243,9 +244,14 @@ async function captureAndSuggest(pointer) {
     if (!model || model === getDefaultModel('local')) callOpts.model = await get(STORAGE_KEYS.LOCAL_MODEL);
   }
 
+  let systemPrompt = buildSystemPrompt(count, customSys);
+  if (await get(STORAGE_KEYS.ENABLE_THINKING)) {
+    systemPrompt = 'THINKING MODE — Before crafting any reply, reason through the conversation carefully. Analyze the context, the user\'s communication style from their messages, and the intent behind the pointer. Consider multiple angles. Then generate your suggestions.\n\n' + systemPrompt;
+  }
+
   try {
     const result = await callLLM(provider, callOpts.model || model, apiKey,
-      buildSystemPrompt(count, customSys), buildUserPrompt(pointer, customUsr),
+      systemPrompt, buildUserPrompt(pointer, customUsr),
       optimized.dataUrl, callOpts);
 
     lastScreenshot = optimized.dataUrl;
@@ -274,4 +280,14 @@ els.newCaptureBtn.addEventListener('click', () => { lastScreenshot = lastPointer
 els.retryBtn.addEventListener('click', () => captureAndSuggest(lastPointer));
 els.settingsBtn.addEventListener('click', () => chrome.runtime.openOptionsPage());
 
-document.addEventListener('DOMContentLoaded', async () => { if (!await checkPending()) showState('empty'); });
+els.thinkingBtn.addEventListener('click', async () => {
+  const current = await get(STORAGE_KEYS.ENABLE_THINKING);
+  const next = !current;
+  await set(STORAGE_KEYS.ENABLE_THINKING, next);
+  els.thinkingBtn.classList.toggle('active', next);
+});
+
+document.addEventListener('DOMContentLoaded', async () => {
+  els.thinkingBtn.classList.toggle('active', await get(STORAGE_KEYS.ENABLE_THINKING));
+  if (!await checkPending()) showState('empty');
+});
