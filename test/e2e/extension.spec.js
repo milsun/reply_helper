@@ -203,7 +203,7 @@ test.describe('API Client — Provider Helpers', () => {
       google: getModelsForProvider('google'),
       unknown: getModelsForProvider('nope')
     }));
-    expect(r.local).toContain('gemma-4-E4B-it-Q4_K_M.gguf');
+    expect(r.local).toContain('gemma-4-E2B-it-UD-Q4_K_XL.gguf');
     expect(r.openai).toContain('gpt-4o');
     expect(r.anthropic).toContain('claude-3-5-sonnet-20241022');
     expect(r.google).toContain('gemini-1.5-pro');
@@ -217,7 +217,7 @@ test.describe('API Client — Provider Helpers', () => {
       anthropic: getDefaultModel('anthropic'),
       google: getDefaultModel('google')
     }));
-    expect(r.local).toBe('gemma-4-E4B-it-Q4_K_M.gguf');
+    expect(r.local).toBe('gemma-4-E2B-it-UD-Q4_K_XL.gguf');
     expect(r.openai).toBe('gpt-4o');
     expect(r.anthropic).toBe('claude-3-5-sonnet-20241022');
     expect(r.google).toBe('gemini-1.5-pro');
@@ -367,11 +367,11 @@ test.describe('Storage Module (mocked)', () => {
       localModel: await get(STORAGE_KEYS.LOCAL_MODEL)
     }));
     expect(r.provider).toBe('local');
-    expect(r.model).toBe('gemma-4-E4B-it-Q4_K_M.gguf');
+    expect(r.model).toBe('gemma-4-E2B-it-UD-Q4_K_XL.gguf');
     expect(r.suggestions).toBe(3);
     expect(r.apiKey).toBe('');
     expect(r.localEndpoint).toBe('http://localhost:8080/v1/chat/completions');
-    expect(r.localModel).toBe('gemma-4-E4B-it-Q4_K_M.gguf');
+    expect(r.localModel).toBe('gemma-4-E2B-it-UD-Q4_K_XL.gguf');
   });
 
   test('set and get round-trip', async ({ page }) => {

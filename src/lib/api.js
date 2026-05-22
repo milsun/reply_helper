@@ -1,8 +1,8 @@
 const PROVIDERS = {
   local: {
     name: 'Local / Ollama',
-    models: ['gemma-4-E4B-it-Q4_K_M.gguf', 'minicpm-v', 'llava', 'llava-phi3', 'bakllava', 'gemma3:12b'],
-    defaultModel: 'gemma-4-E4B-it-Q4_K_M.gguf',
+    models: ['gemma-4-E2B-it-UD-Q4_K_XL.gguf', 'gemma-4-E4B-it-Q4_K_M.gguf', 'minicpm-v', 'llava', 'llava-phi3', 'bakllava', 'gemma3:12b'],
+    defaultModel: 'gemma-4-E2B-it-UD-Q4_K_XL.gguf',
     endpoint: '',
 
     buildHeaders(apiKey) {
@@ -239,7 +239,7 @@ function getModelsForProvider(providerKey) {
 
 function getDefaultModel(providerKey) {
   const provider = PROVIDERS[providerKey];
-  return provider ? provider.defaultModel : 'gemma-4-E4B-it-Q4_K_M.gguf';
+  return provider ? provider.defaultModel : 'gemma-4-E2B-it-UD-Q4_K_XL.gguf';
 }
 
 function getProviderNames() {

@@ -4,7 +4,7 @@ const http = require('http');
 
 const HARNESS_PATH = path.resolve(__dirname, '../fixtures/test-harness.html');
 const LOCAL_API = 'http://localhost:8080/v1/chat/completions';
-const MODEL = 'gemma-4-E4B-it-Q4_K_M.gguf';
+const MODEL = 'gemma-4-E2B-it-UD-Q4_K_XL.gguf';
 
 async function callLocalAPI(payload) {
   return new Promise((resolve, reject) => {
