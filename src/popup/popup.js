@@ -245,8 +245,10 @@ async function captureAndSuggest(pointer) {
   }
 
   let systemPrompt = buildSystemPrompt(count, customSys);
-  if (await get(STORAGE_KEYS.ENABLE_THINKING)) {
+  const thinking = await get(STORAGE_KEYS.ENABLE_THINKING);
+  if (thinking) {
     systemPrompt = 'THINKING MODE — Before crafting any reply, reason through the conversation carefully. Analyze the context, the user\'s communication style from their messages, and the intent behind the pointer. Consider multiple angles. Then generate your suggestions.\n\n' + systemPrompt;
+    callOpts.thinking = true;
   }
 
   try {

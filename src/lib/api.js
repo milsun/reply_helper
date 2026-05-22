@@ -180,6 +180,10 @@ async function callLLM(providerKey, model, apiKey, systemPrompt, userPrompt, ima
   const imageMediaType = imageDataUrl.match(/data:(image\/\w+);/)?.[1] || 'image/jpeg';
 
   const payload = provider.buildPayload(model, systemPrompt, userPrompt, imageBase64, imageMediaType);
+
+  if (options.thinking) {
+    payload.chat_template_kwargs = { enable_thinking: true };
+  }
   const headers = provider.buildHeaders(apiKey);
   const endpoint = options.endpoint || (provider.getEndpoint ? provider.getEndpoint(model) : provider.endpoint);
 
