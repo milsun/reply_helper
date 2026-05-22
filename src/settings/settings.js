@@ -5,6 +5,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     apiKeyInput: document.getElementById('api-key-input'),
     apiKeyHint: document.getElementById('api-key-hint'),
     toggleApiKey: document.getElementById('toggle-api-key'),
+    localSettings: document.getElementById('local-settings'),
+    localEndpointInput: document.getElementById('local-endpoint-input'),
+    localModelInput: document.getElementById('local-model-input'),
     suggestionCount: document.getElementById('suggestion-count-range'),
     countDisplay: document.getElementById('count-display'),
     qualityRange: document.getElementById('quality-range'),
@@ -29,10 +32,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
+  function toggleLocalSettings(providerKey) {
+    const isLocal = providerKey === 'local';
+    elements.localSettings.classList.toggle('visible', isLocal);
+    elements.apiKeyInput.parentElement.classList.toggle('local-provider', isLocal);
+    elements.apiKeyHint.textContent = isLocal ? 'Optional — leave empty if no auth is required' : (savedApiKey ? 'API key configured' : 'No API key set');
+  }
+
   async function loadSettings() {
     const provider = await get(STORAGE_KEYS.PROVIDER);
     const model = await get(STORAGE_KEYS.MODEL);
     savedApiKey = await get(STORAGE_KEYS.API_KEY);
+    const localEndpoint = await get(STORAGE_KEYS.LOCAL_ENDPOINT);
+    const localModel = await get(STORAGE_KEYS.LOCAL_MODEL);
     const suggestionCount = await get(STORAGE_KEYS.SUGGESTION_COUNT);
     const quality = await get(STORAGE_KEYS.IMAGE_QUALITY);
     const customSystemPrompt = await get(STORAGE_KEYS.CUSTOM_SYSTEM_PROMPT);
@@ -40,12 +52,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     elements.providerSelect.value = provider;
     populateModelSelect(provider);
+    toggleLocalSettings(provider);
 
     const availableModels = getModelsForProvider(provider);
     elements.modelSelect.value = availableModels.includes(model) ? model : availableModels[0];
 
     elements.apiKeyInput.value = savedApiKey;
-    elements.apiKeyHint.textContent = savedApiKey ? 'API key configured' : 'No API key set';
+    elements.apiKeyHint.textContent = provider === 'local'
+      ? 'Optional — leave empty if no auth is required'
+      : (savedApiKey ? 'API key configured' : 'No API key set');
+
+    elements.localEndpointInput.value = localEndpoint;
+    elements.localModelInput.value = localModel;
+
     elements.suggestionCount.value = suggestionCount;
     elements.countDisplay.textContent = suggestionCount;
     elements.qualityRange.value = Math.round(quality * 100);
@@ -62,9 +81,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const provider = e.target.value;
     await saveSetting(STORAGE_KEYS.PROVIDER, provider);
     populateModelSelect(provider);
+    toggleLocalSettings(provider);
     const defaultModel = getDefaultModel(provider);
     elements.modelSelect.value = defaultModel;
     await saveSetting(STORAGE_KEYS.MODEL, defaultModel);
+
+    elements.apiKeyHint.textContent = provider === 'local'
+      ? 'Optional — leave empty if no auth is required'
+      : (savedApiKey ? 'API key configured' : 'No API key set');
   });
 
   elements.modelSelect.addEventListener('change', async (e) => {
@@ -90,6 +114,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else {
       icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
     }
+  });
+
+  let localEndpointTimer;
+  elements.localEndpointInput.addEventListener('input', () => {
+    clearTimeout(localEndpointTimer);
+    localEndpointTimer = setTimeout(async () => {
+      await saveSetting(STORAGE_KEYS.LOCAL_ENDPOINT, elements.localEndpointInput.value.trim() || 'http://localhost:11434/v1');
+    }, 500);
+  });
+
+  let localModelTimer;
+  elements.localModelInput.addEventListener('input', () => {
+    clearTimeout(localModelTimer);
+    localModelTimer = setTimeout(async () => {
+      const val = elements.localModelInput.value.trim();
+      await saveSetting(STORAGE_KEYS.LOCAL_MODEL, val || 'minicpm-v');
+    }, 500);
   });
 
   elements.suggestionCount.addEventListener('input', async (e) => {

@@ -2,6 +2,8 @@ const STORAGE_KEYS = {
   PROVIDER: 'provider',
   MODEL: 'model',
   API_KEY: 'apiKey',
+  LOCAL_ENDPOINT: 'localEndpoint',
+  LOCAL_MODEL: 'localModel',
   CUSTOM_SYSTEM_PROMPT: 'customSystemPrompt',
   CUSTOM_USER_PROMPT_TEMPLATE: 'customUserPromptTemplate',
   THEME: 'theme',
@@ -12,9 +14,11 @@ const STORAGE_KEYS = {
 };
 
 const DEFAULTS = {
-  [STORAGE_KEYS.PROVIDER]: 'openai',
-  [STORAGE_KEYS.MODEL]: 'gpt-4o',
+  [STORAGE_KEYS.PROVIDER]: 'local',
+  [STORAGE_KEYS.MODEL]: 'gemma-4-E4B-it-Q4_K_M.gguf',
   [STORAGE_KEYS.API_KEY]: '',
+  [STORAGE_KEYS.LOCAL_ENDPOINT]: 'http://localhost:8080/v1/chat/completions',
+  [STORAGE_KEYS.LOCAL_MODEL]: 'gemma-4-E4B-it-Q4_K_M.gguf',
   [STORAGE_KEYS.CUSTOM_SYSTEM_PROMPT]: '',
   [STORAGE_KEYS.CUSTOM_USER_PROMPT_TEMPLATE]: '',
   [STORAGE_KEYS.THEME]: 'system',

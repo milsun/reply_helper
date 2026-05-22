@@ -44,11 +44,11 @@ function showToast(message, duration = 2000) {
   document.body.appendChild(toast);
 
   requestAnimationFrame(() => {
-    toast.classList.add('toast-visible');
+    toast.classList.add('visible');
   });
 
   setTimeout(() => {
-    toast.classList.remove('toast-visible');
+    toast.classList.remove('visible');
     setTimeout(() => toast.remove(), 300);
   }, duration);
 }

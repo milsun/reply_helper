@@ -1,42 +1,16 @@
-let currentState = 'empty';
-let lastScreenshot = null;
-let lastPointer = '';
-let lastResult = null;
-let selectedSuggestion = null;
+let lastScreenshot = null, lastPointer = '', lastResult = null, selectedSuggestion = null;
 
+const $ = id => document.getElementById(id);
 const els = {
-  emptyState: document.getElementById('empty-state'),
-  loadingState: document.getElementById('loading-state'),
-  resultsState: document.getElementById('results-state'),
-  errorState: document.getElementById('error-state'),
-  captureBtn: document.getElementById('capture-btn'),
-  pointerInput: document.getElementById('pointer-input'),
-  loadingStatus: document.getElementById('loading-status'),
-  loadingPreview: document.getElementById('loading-preview'),
-  screenshotPreview: document.getElementById('screenshot-preview'),
-  togglePreviewBtn: document.getElementById('toggle-preview-btn'),
-  previewWrap: document.getElementById('screenshot-preview-wrap'),
-  pointerDisplay: document.getElementById('pointer-display'),
-  contextSummary: document.getElementById('context-summary'),
-  suggestionsList: document.getElementById('suggestions-list'),
-  regenerateBtn: document.getElementById('regenerate-btn'),
-  newCaptureBtn: document.getElementById('new-capture-btn'),
-  errorMessage: document.getElementById('error-message'),
-  retryBtn: document.getElementById('retry-btn'),
-  settingsBtn: document.getElementById('settings-btn'),
-  refineSection: document.getElementById('refine-section'),
-  refineSelectedText: document.getElementById('refine-selected-text'),
-  refineInput: document.getElementById('refine-input'),
-  refineBtn: document.getElementById('refine-btn'),
-  refineResult: document.getElementById('refine-result'),
-  refineResultText: document.getElementById('refine-result-text'),
-  refineResultChanges: document.getElementById('refine-result-changes'),
-  refineCopyBtn: document.getElementById('refine-copy-btn'),
-  refineDismissBtn: document.getElementById('refine-dismiss-btn')
+  emptyState: $('empty-state'), loadingState: $('loading-state'),
+  resultsState: $('results-state'), errorState: $('error-state'),
+  captureBtn: $('capture-btn'), pointerInput: $('pointer-input'),
+  loadingStatus: $('loading-status'), suggestionsList: $('suggestions-list'),
+  regenerateBtn: $('regenerate-btn'), newCaptureBtn: $('new-capture-btn'),
+  errorMessage: $('error-message'), retryBtn: $('retry-btn'), settingsBtn: $('settings-btn')
 };
 
-function setState(state) {
-  currentState = state;
+function showState(state) {
   els.emptyState.classList.toggle('active', state === 'empty');
   els.loadingState.classList.toggle('active', state === 'loading');
   els.resultsState.classList.toggle('active', state === 'results');
@@ -44,299 +18,258 @@ function setState(state) {
   els.captureBtn.disabled = state !== 'empty';
 }
 
-function setLoadingStatus(text) {
-  els.loadingStatus.textContent = text;
+function setStep(stepName) {
+  document.querySelectorAll('.step').forEach(el => {
+    el.classList.remove('active', 'complete');
+    if (el.dataset.step === stepName) el.classList.add('active');
+  });
 }
 
-function showError(message) {
-  els.errorMessage.textContent = message;
-  setState('error');
-}
+function showError(msg) { els.errorMessage.textContent = msg; showState('error'); }
 
-function clearSelection() {
+function deselectAll() {
   selectedSuggestion = null;
-  document.querySelectorAll('.suggestion-card.selected').forEach(c => c.classList.remove('selected'));
-  els.refineSection.classList.remove('visible');
-  els.refineResult.classList.remove('visible');
-  els.refineInput.value = '';
+  document.querySelectorAll('.suggestion-card.selected').forEach(c => {
+    c.classList.remove('selected');
+    const box = c.querySelector('.refine-inline');
+    if (box) box.remove();
+  });
 }
 
 function selectSuggestion(card, suggestion) {
-  document.querySelectorAll('.suggestion-card.selected').forEach(c => c.classList.remove('selected'));
+  const alreadySelected = card.classList.contains('selected');
+  deselectAll();
+  if (alreadySelected) return;
+
   card.classList.add('selected');
   selectedSuggestion = suggestion;
 
-  els.refineSelectedText.textContent = '"' + suggestion.text + '"';
-  els.refineInput.value = '';
-  els.refineSection.classList.add('visible');
-  els.refineResult.classList.remove('visible');
-  els.refineInput.focus();
+  // Build inline refine UI
+  const box = document.createElement('div');
+  box.className = 'refine-inline';
+
+  const selected = document.createElement('div');
+  selected.className = 'refine-selected';
+  selected.textContent = '"' + (suggestion.text || '').slice(0, 80) + '"';
+  box.appendChild(selected);
+
+  const row = document.createElement('div');
+  row.className = 'refine-row';
+  const input = document.createElement('input');
+  input.type = 'text'; input.className = 'refine-input';
+  input.placeholder = 'make it shorter, more formal, add a joke...';
+  input.maxLength = 200;
+  row.appendChild(input);
+
+  const btn = document.createElement('button');
+  btn.className = 'btn-refine'; btn.textContent = 'Refine';
+  btn.addEventListener('click', () => doRefine(card, suggestion, input));
+  row.appendChild(btn);
+  box.appendChild(row);
+
+  // Result area
+  const result = document.createElement('div');
+  result.className = 'refine-result';
+  const resultText = document.createElement('p');
+  resultText.className = 'refine-result-text';
+  const resultChanges = document.createElement('span');
+  resultChanges.className = 'refine-result-changes';
+  const resultBtns = document.createElement('div');
+  resultBtns.className = 'refine-result-btns';
+
+  const copyBtn = document.createElement('button');
+  copyBtn.className = 'btn-sm'; copyBtn.textContent = 'Copy';
+  copyBtn.addEventListener('click', async () => {
+    const t = resultText.textContent;
+    if (t && await copyToClipboard(t)) showToast('Copied!');
+  });
+  const dismissBtn = document.createElement('button');
+  dismissBtn.className = 'btn-sm'; dismissBtn.textContent = 'Dismiss';
+  dismissBtn.addEventListener('click', () => result.classList.remove('visible'));
+
+  resultBtns.appendChild(copyBtn);
+  resultBtns.appendChild(dismissBtn);
+  result.appendChild(resultText);
+  result.appendChild(resultChanges);
+  result.appendChild(resultBtns);
+  box.appendChild(result);
+
+  card.appendChild(box);
+  input.focus();
+
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') doRefine(card, suggestion, input);
+  });
 }
 
-function renderSuggestions(result) {
-  els.contextSummary.textContent = result.context_summary || '';
+async function doRefine(card, suggestion, input) {
+  const refinementInput = input.value.trim();
+  if (!refinementInput) { showToast('Enter instructions first.'); return; }
 
-  if (result.style_profile) {
-    const sp = result.style_profile;
-    const traits = sp.signature_traits ? ` · ${sp.signature_traits}` : '';
-    els.contextSummary.textContent = (result.context_summary || '') +
-      ` | Style: ${sp.length}, ${sp.formality}, emojis: ${sp.emoji_usage}${traits}`;
+  const [provider, apiKey, model] = await Promise.all([get(STORAGE_KEYS.PROVIDER), get(STORAGE_KEYS.API_KEY), get(STORAGE_KEYS.MODEL)]);
+  if (provider !== 'local' && !apiKey) { showError('API key needed.'); return; }
+
+  const refineBtn = card.querySelector('.btn-refine');
+  const resultDiv = card.querySelector('.refine-result');
+  refineBtn.disabled = true;
+  refineBtn.textContent = '...';
+  resultDiv.classList.remove('visible');
+
+  const sp = lastResult?.style_profile || null;
+  const prompt = buildRefinePrompt(suggestion.text, refinementInput, lastResult?.context_summary || '', sp);
+  const refineOpts = {};
+  if (provider === 'local') {
+    let ep = await get(STORAGE_KEYS.LOCAL_ENDPOINT);
+    if (!ep.endsWith('/chat/completions')) ep = ep.replace(/\/+$/, '') + '/chat/completions';
+    refineOpts.endpoint = ep;
+    if (!model || model === getDefaultModel('local')) refineOpts.model = await get(STORAGE_KEYS.LOCAL_MODEL);
   }
 
-  els.suggestionsList.innerHTML = '';
-  clearSelection();
+  try {
+    const result = await callLLM(provider, refineOpts.model || model, apiKey, prompt, '', lastScreenshot, refineOpts);
+    card.querySelector('.refine-result-text').textContent = result.refined_text || '';
+    card.querySelector('.refine-result-changes').textContent = result.changes_made || '';
+    resultDiv.classList.add('visible');
+  } catch (e) { showError(e.message || 'Refinement failed.'); }
+  finally { refineBtn.disabled = false; refineBtn.textContent = 'Refine'; }
+}
 
-  (result.suggestions || []).forEach((suggestion, index) => {
+function renderCards(result) {
+  els.suggestionsList.innerHTML = '';
+  deselectAll();
+
+  (result.suggestions || []).forEach((s, i) => {
     const card = document.createElement('div');
     card.className = 'suggestion-card';
-    card.setAttribute('data-index', index);
+    card.setAttribute('tabindex', '0');
 
-    card.addEventListener('click', () => {
-      selectSuggestion(card, suggestion);
-    });
+    // Badge
+    const badge = document.createElement('div');
+    badge.className = 'card-badge';
+    const dot = document.createElement('span');
+    dot.className = 'card-badge-dot';
+    dot.classList.add(['a','b','c'][i] || 'a');
+    badge.appendChild(dot);
+    const labels = { natural: 'Natural', 'different-angle': 'Alternate', creative: 'Creative' };
+    const label = document.createElement('span');
+    label.textContent = labels[s.approach] || s.approach || 'Natural';
+    badge.appendChild(label);
+    card.appendChild(badge);
 
-    const approach = document.createElement('div');
-    approach.className = 'suggestion-approach';
-    approach.textContent = suggestion.approach || suggestion.tone || '';
-    card.appendChild(approach);
+    // Body
+    const body = document.createElement('div');
+    body.className = 'card-body';
+    body.textContent = s.text || '';
+    card.appendChild(body);
 
-    if (suggestion.rationale) {
+    // Rationale (hidden until selected)
+    if (s.rationale) {
       const rationale = document.createElement('div');
-      rationale.className = 'suggestion-rationale';
-      rationale.textContent = suggestion.rationale;
+      rationale.className = 'card-rationale';
+      rationale.textContent = s.rationale;
       card.appendChild(rationale);
     }
 
-    const text = document.createElement('div');
-    text.className = 'suggestion-text';
-    text.textContent = suggestion.text;
-    card.appendChild(text);
+    // Hint
+    const hint = document.createElement('div');
+    hint.className = 'card-hint';
+    hint.textContent = 'Click to refine';
+    card.appendChild(hint);
 
-    const meta = document.createElement('div');
-    meta.className = 'suggestion-meta';
-
-    const tone = document.createElement('span');
-    tone.className = 'suggestion-tone';
-    tone.textContent = suggestion.tone || suggestion.approach || 'general';
-    meta.appendChild(tone);
-
+    // Copy button
     const copyBtn = document.createElement('button');
-    copyBtn.className = 'copy-btn';
-    copyBtn.title = 'Copy to clipboard';
-    copyBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>';
+    copyBtn.className = 'card-copy';
+    copyBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy';
     copyBtn.addEventListener('click', async (e) => {
       e.stopPropagation();
-      const success = await copyToClipboard(suggestion.text);
-      if (success) {
+      const ok = await copyToClipboard(s.text);
+      if (ok) {
         copyBtn.classList.add('copied');
-        copyBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+        copyBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Copied';
         showToast('Copied!');
         setTimeout(() => {
           copyBtn.classList.remove('copied');
-          copyBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>';
+          copyBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy';
         }, 2000);
       }
     });
-    meta.appendChild(copyBtn);
+    card.appendChild(copyBtn);
 
-    card.appendChild(meta);
+    // Click card to toggle refine
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('.card-copy') || e.target.closest('.btn-refine') || e.target.closest('.btn-sm')) return;
+      selectSuggestion(card, s);
+    });
+
     els.suggestionsList.appendChild(card);
   });
-
-  if (lastPointer) {
-    els.pointerDisplay.textContent = `Your pointer: "${lastPointer}"`;
-    els.pointerDisplay.classList.add('visible');
-  } else {
-    els.pointerDisplay.classList.remove('visible');
-  }
 }
 
 async function captureAndSuggest(pointer) {
-  const apiKey = await get(STORAGE_KEYS.API_KEY);
-  if (!apiKey) {
-    showError('Please configure your API key in Settings.');
-    return;
-  }
+  const [provider, apiKey] = await Promise.all([get(STORAGE_KEYS.PROVIDER), get(STORAGE_KEYS.API_KEY)]);
+  if (provider !== 'local' && !apiKey) { showError('API key needed.'); return; }
 
-  setState('loading');
-  els.captureBtn.disabled = true;
-  setLoadingStatus('Capturing screenshot...');
+  showState('loading');
+  els.loadingStatus.textContent = 'Capturing screenshot...';
+  setStep('capture');
 
   let screenshot;
-  try {
-    screenshot = await captureVisibleTab();
-  } catch (err) {
-    showError(err.message || 'Failed to capture screenshot.');
-    return;
-  }
+  try { screenshot = await captureVisibleTab(); }
+  catch (e) { showError(e.message || 'Capture failed.'); return; }
 
-  setLoadingStatus('Optimizing image...');
-  els.loadingPreview.style.display = 'block';
-  els.loadingPreview.innerHTML = `<img src="${screenshot}" alt="Captured" />`;
+  els.loadingStatus.textContent = 'Optimizing image...';
+  setStep('optimize');
 
   let optimized;
   try {
-    const quality = await get(STORAGE_KEYS.IMAGE_QUALITY);
-    const maxDimension = await get(STORAGE_KEYS.IMAGE_MAX_DIMENSION);
-    optimized = await optimizeImage(screenshot, {
-      maxWidth: maxDimension,
-      maxHeight: maxDimension,
-      quality
-    });
-  } catch (err) {
-    showError('Failed to optimize screenshot. Please try again.');
-    return;
-  }
+    const [quality, maxDim] = await Promise.all([get(STORAGE_KEYS.IMAGE_QUALITY), get(STORAGE_KEYS.IMAGE_MAX_DIMENSION)]);
+    optimized = await optimizeImage(screenshot, { maxWidth: maxDim, maxHeight: maxDim, quality });
+  } catch (e) { showError('Optimization failed.'); return; }
 
-  setLoadingStatus('Analyzing conversation...');
+  els.loadingStatus.textContent = 'Analyzing conversation...';
+  setStep('analyze');
 
-  const [
-    provider, model, suggestionCount, customSystemPrompt, customUserTemplate
-  ] = await Promise.all([
-    get(STORAGE_KEYS.PROVIDER),
-    get(STORAGE_KEYS.MODEL),
-    get(STORAGE_KEYS.SUGGESTION_COUNT),
-    get(STORAGE_KEYS.CUSTOM_SYSTEM_PROMPT),
-    get(STORAGE_KEYS.CUSTOM_USER_PROMPT_TEMPLATE)
+  const [model, count, customSys, customUsr] = await Promise.all([
+    get(STORAGE_KEYS.MODEL), get(STORAGE_KEYS.SUGGESTION_COUNT),
+    get(STORAGE_KEYS.CUSTOM_SYSTEM_PROMPT), get(STORAGE_KEYS.CUSTOM_USER_PROMPT_TEMPLATE)
   ]);
 
-  const systemPrompt = buildSystemPrompt(suggestionCount, customSystemPrompt);
-  const userPrompt = buildUserPrompt(pointer, customUserTemplate);
+  const callOpts = {};
+  if (provider === 'local') {
+    let ep = await get(STORAGE_KEYS.LOCAL_ENDPOINT);
+    if (!ep.endsWith('/chat/completions')) ep = ep.replace(/\/+$/, '') + '/chat/completions';
+    callOpts.endpoint = ep;
+    if (!model || model === getDefaultModel('local')) callOpts.model = await get(STORAGE_KEYS.LOCAL_MODEL);
+  }
 
   try {
-    const result = await callLLM(provider, model, apiKey, systemPrompt, userPrompt, optimized.dataUrl);
+    const result = await callLLM(provider, callOpts.model || model, apiKey,
+      buildSystemPrompt(count, customSys), buildUserPrompt(pointer, customUsr),
+      optimized.dataUrl, callOpts);
+
     lastScreenshot = optimized.dataUrl;
     lastPointer = pointer;
     lastResult = result;
-
-    els.screenshotPreview.src = lastScreenshot;
-    renderSuggestions(result);
-    setState('results');
-
-    await addRecentCapture({
-      pointer: lastPointer,
-      suggestionCount: (lastResult.suggestions || []).length,
-      styleProfile: lastResult.style_profile || null
-    });
-  } catch (err) {
-    showError(err.message || 'Something went wrong. Please try again.');
-  }
+    renderCards(result);
+    showState('results');
+    addRecentCapture({ pointer, suggestionCount: (result.suggestions || []).length, styleProfile: result.style_profile || null });
+  } catch (e) { showError(e.message || 'Something went wrong.'); }
 }
 
-async function refineSelectedReply() {
-  if (!selectedSuggestion) return;
-
-  const refinementInput = els.refineInput.value.trim();
-  if (!refinementInput) {
-    showToast('Enter refinement instructions first.');
-    return;
-  }
-
-  const apiKey = await get(STORAGE_KEYS.API_KEY);
-  if (!apiKey) {
-    showError('Please configure your API key in Settings.');
-    return;
-  }
-
-  const provider = await get(STORAGE_KEYS.PROVIDER);
-  const model = await get(STORAGE_KEYS.MODEL);
-
-  els.refineBtn.disabled = true;
-  els.refineBtn.textContent = 'Refining...';
-  els.refineResult.classList.remove('visible');
-
-  const styleProfile = lastResult && lastResult.style_profile ? lastResult.style_profile : null;
-  const contextSummary = lastResult ? lastResult.context_summary : '';
-  const refinePrompt = buildRefinePrompt(selectedSuggestion.text, refinementInput, contextSummary, styleProfile);
-
-  try {
-    const result = await callLLM(provider, model, apiKey, refinePrompt, '', lastScreenshot);
-
-    els.refineResultText.textContent = result.refined_text || '';
-    els.refineResultChanges.textContent = result.changes_made || '';
-    els.refineResult.classList.add('visible');
-  } catch (err) {
-    showError(err.message || 'Refinement failed. Please try again.');
-  } finally {
-    els.refineBtn.disabled = false;
-    els.refineBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg> Refine`;
-  }
+async function checkPending() {
+  const d = await chrome.storage.local.get('pendingCapture');
+  if (!d.pendingCapture) return false;
+  if (Date.now() - d.pendingCapture.timestamp > 30000) { await chrome.storage.local.remove('pendingCapture'); return false; }
+  await chrome.storage.local.remove('pendingCapture');
+  await captureAndSuggest('');
+  return true;
 }
 
-async function checkPendingCapture() {
-  const result = await chrome.storage.local.get('pendingCapture');
-  if (result.pendingCapture) {
-    const pending = result.pendingCapture;
-    const age = Date.now() - pending.timestamp;
-    if (age < 30000) {
-      await chrome.storage.local.remove('pendingCapture');
-      await captureAndSuggest('');
-      return true;
-    }
-    await chrome.storage.local.remove('pendingCapture');
-  }
-  return false;
-}
+els.captureBtn.addEventListener('click', () => captureAndSuggest(els.pointerInput.value.trim()));
+els.pointerInput.addEventListener('keydown', e => { if (e.key === 'Enter') captureAndSuggest(els.pointerInput.value.trim()); });
+els.regenerateBtn.addEventListener('click', () => captureAndSuggest(lastPointer));
+els.newCaptureBtn.addEventListener('click', () => { lastScreenshot = lastPointer = lastResult = null; selectedSuggestion = null; els.pointerInput.value = ''; showState('empty'); });
+els.retryBtn.addEventListener('click', () => captureAndSuggest(lastPointer));
+els.settingsBtn.addEventListener('click', () => chrome.runtime.openOptionsPage());
 
-els.captureBtn.addEventListener('click', async () => {
-  const pointer = els.pointerInput.value.trim();
-  await captureAndSuggest(pointer);
-});
-
-els.pointerInput.addEventListener('keydown', async (e) => {
-  if (e.key === 'Enter') {
-    const pointer = els.pointerInput.value.trim();
-    await captureAndSuggest(pointer);
-  }
-});
-
-els.regenerateBtn.addEventListener('click', async () => {
-  await captureAndSuggest(lastPointer);
-});
-
-els.newCaptureBtn.addEventListener('click', () => {
-  lastScreenshot = null;
-  lastPointer = '';
-  lastResult = null;
-  selectedSuggestion = null;
-  els.pointerInput.value = '';
-  setState('empty');
-});
-
-els.retryBtn.addEventListener('click', async () => {
-  await captureAndSuggest(lastPointer);
-});
-
-els.settingsBtn.addEventListener('click', () => {
-  chrome.runtime.openOptionsPage();
-});
-
-els.togglePreviewBtn.addEventListener('click', () => {
-  const collapsed = els.previewWrap.classList.toggle('collapsed');
-  els.togglePreviewBtn.textContent = collapsed ? 'Show' : 'Hide';
-});
-
-els.refineBtn.addEventListener('click', refineSelectedReply);
-
-els.refineInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') refineSelectedReply();
-});
-
-els.refineCopyBtn.addEventListener('click', async () => {
-  const text = els.refineResultText.textContent;
-  if (text) {
-    const success = await copyToClipboard(text);
-    if (success) showToast('Copied refined reply!');
-  }
-});
-
-els.refineDismissBtn.addEventListener('click', () => {
-  els.refineResult.classList.remove('visible');
-});
-
-document.addEventListener('DOMContentLoaded', async () => {
-  const handled = await checkPendingCapture();
-  if (!handled) {
-    setState('empty');
-  }
-});
+document.addEventListener('DOMContentLoaded', async () => { if (!await checkPending()) showState('empty'); });

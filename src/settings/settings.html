@@ -19,6 +19,7 @@
         <div class="form-group">
           <label for="provider-select">AI Provider</label>
           <select id="provider-select" class="form-select">
+            <option value="local">Local / Ollama</option>
             <option value="openai">OpenAI</option>
             <option value="anthropic">Anthropic (Claude)</option>
             <option value="google">Google Gemini</option>
@@ -49,6 +50,31 @@
             </button>
           </div>
           <span id="api-key-hint" class="form-hint"></span>
+        </div>
+
+        <div id="local-settings" class="local-settings">
+          <div class="form-group">
+            <label for="local-endpoint-input">Endpoint URL</label>
+            <input
+              type="text"
+              id="local-endpoint-input"
+              class="form-input"
+              placeholder="http://localhost:11434/v1"
+              autocomplete="off"
+            />
+            <span class="form-hint">Ollama OpenAI-compatible endpoint, LM Studio, or any local server</span>
+          </div>
+          <div class="form-group">
+            <label for="local-model-input">Model Name</label>
+            <input
+              type="text"
+              id="local-model-input"
+              class="form-input"
+              placeholder="minicpm-v"
+              autocomplete="off"
+            />
+            <span class="form-hint">Vision-capable models: minicpm-v, llava, gemma3, bakllava</span>
+          </div>
         </div>
       </section>
 
@@ -117,7 +143,7 @@
       </section>
 
       <div class="settings-actions">
-        <button type="button" id="reset-btn" class="btn btn-secondary">Reset to Defaults</button>
+        <button type="button" id="reset-btn" class="btn btn-danger">Reset to Defaults</button>
       </div>
     </main>
 

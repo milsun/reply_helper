@@ -7,142 +7,61 @@
 </head>
 <body>
   <div id="app">
-    <header class="popup-header">
+    <header class="header">
       <div class="header-left">
-        <h1>Reply Helper</h1>
+        <span class="header-dot"></span>
+        <span class="header-title">Reply Helper</span>
       </div>
-      <div class="header-actions">
-        <button id="settings-btn" class="icon-btn" title="Settings">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
-          </svg>
-        </button>
-      </div>
+      <button id="settings-btn" class="icon-btn" title="Settings" aria-label="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+        </svg>
+      </button>
     </header>
 
-    <div id="empty-state" class="state-content active">
-      <div class="empty-illustration">
-        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="empty-icon">
-          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
-          <line x1="8" y1="21" x2="16" y2="21"/>
-          <line x1="12" y1="17" x2="12" y2="21"/>
-          <path d="M7 10l2 2 4-4"/>
-        </svg>
-      </div>
-      <p class="empty-title">Capture a chat to get started</p>
-      <p class="empty-desc">Add a pointer (optional) and click the button below to capture the current chat and get AI reply suggestions.</p>
+    <div id="empty-state" class="state active">
+      <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+        <path d="M14 17l2 2 4-4" stroke-width="2"/>
+      </svg>
+      <p class="empty-heading">What do you want to say?</p>
 
-      <div id="pointer-input-group" class="pointer-group">
-        <input
-          type="text"
-          id="pointer-input"
-          class="pointer-input"
-          placeholder="e.g. agree but suggest a later time"
-          maxlength="200"
-        />
+      <div class="input-group">
+        <label class="input-label" for="pointer-input">Reply Direction</label>
+        <input id="pointer-input" type="text" class="input-main" placeholder='e.g. agree but suggest another day' maxlength="200" />
       </div>
 
-      <button id="capture-btn" class="btn btn-primary btn-full">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
-          <circle cx="12" cy="13" r="4"/>
-        </svg>
+      <button id="capture-btn" class="btn-capture">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
         Capture &amp; Suggest
       </button>
 
-      <p class="shortcut-hint">
-        <kbd>Ctrl+Shift+R</kbd> to capture
-      </p>
+      <p class="hint">⌘ Shift R</p>
     </div>
 
-    <div id="loading-state" class="state-content">
-      <div class="loading-content">
+    <div id="loading-state" class="state">
+      <div class="loading-wrap">
         <div class="spinner"></div>
-        <p id="loading-status" class="loading-text">Capturing screenshot...</p>
-        <div class="loading-preview" id="loading-preview"></div>
-      </div>
-    </div>
-
-    <div id="results-state" class="state-content">
-      <div class="results-scroll">
-        <div id="screenshot-preview-wrap" class="preview-wrap">
-          <div class="preview-header-bar">
-            <span class="preview-label">Screenshot</span>
-            <button id="toggle-preview-btn" class="link-btn">Hide</button>
-          </div>
-          <img id="screenshot-preview" class="preview-img" alt="Captured screenshot" />
-        </div>
-
-        <div id="pointer-display" class="pointer-display"></div>
-
-        <div class="results-info" id="results-info">
-          <span id="context-summary" class="context-summary"></span>
-        </div>
-
-        <div class="suggestions-list" id="suggestions-list">
-        </div>
-
-        <div id="refine-section" class="refine-section">
-          <div class="refine-selected" id="refine-selected-text"></div>
-          <div class="refine-input-row">
-            <input
-              type="text"
-              id="refine-input"
-              class="refine-input"
-              placeholder="e.g. make it shorter, sound more confident, add a joke..."
-              maxlength="200"
-            />
-            <button id="refine-btn" class="btn btn-primary btn-sm">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="23 4 23 10 17 10"/>
-                <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
-              </svg>
-              Refine
-            </button>
-          </div>
-          <div id="refine-result" class="refine-result">
-            <div class="refine-result-text" id="refine-result-text"></div>
-            <div class="refine-result-changes" id="refine-result-changes"></div>
-            <div class="refine-result-actions">
-              <button id="refine-copy-btn" class="btn btn-sm btn-outline">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                  <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
-                </svg>
-                Copy
-              </button>
-              <button id="refine-dismiss-btn" class="btn btn-sm btn-outline">Dismiss</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="results-actions">
-          <button id="regenerate-btn" class="btn btn-secondary btn-full">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="23 4 23 10 17 10"/>
-              <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
-            </svg>
-            Regenerate
-          </button>
-
-          <button id="new-capture-btn" class="btn btn-outline btn-full">
-            New Capture
-          </button>
+        <p id="loading-status">Capturing screenshot...</p>
+        <div class="steps">
+          <span class="step active" data-step="capture"></span>
+          <span class="step" data-step="optimize"></span>
+          <span class="step" data-step="analyze"></span>
         </div>
       </div>
     </div>
 
-    <div id="error-state" class="state-content">
-      <div class="error-content">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="error-icon">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="12" y1="8" x2="12" y2="12"/>
-          <line x1="12" y1="16" x2="12.01" y2="16"/>
-        </svg>
-        <p id="error-message" class="error-text">Something went wrong.</p>
-        <button id="retry-btn" class="btn btn-primary">Retry</button>
+    <div id="results-state" class="state">
+      <div id="suggestions-list"></div>
+      <div class="results-footer">
+        <button id="regenerate-btn" class="link">Regenerate</button>
+        <button id="new-capture-btn" class="link">New Capture</button>
       </div>
+    </div>
+
+    <div id="error-state" class="state">
+      <p id="error-message">Something went wrong.</p>
+      <button id="retry-btn" class="btn-capture">Retry</button>
     </div>
   </div>
 

@@ -23,7 +23,7 @@ test.describe('API Client — Payload Construction', () => {
     expect(p.messages[0].role).toBe('system');
     expect(p.messages[1].content[0].type).toBe('image_url');
     expect(p.messages[1].content[0].image_url.detail).toBe('high');
-    expect(p.max_tokens).toBe(1024);
+    expect(p.max_tokens).toBe(32768);
     expect(p.response_format.type).toBe('json_object');
   });
 
@@ -197,11 +197,13 @@ test.describe('API Client — Provider Helpers', () => {
 
   test('getModelsForProvider returns correct models', async ({ page }) => {
     const r = await page.evaluate(() => ({
+      local: getModelsForProvider('local'),
       openai: getModelsForProvider('openai'),
       anthropic: getModelsForProvider('anthropic'),
       google: getModelsForProvider('google'),
       unknown: getModelsForProvider('nope')
     }));
+    expect(r.local).toContain('gemma-4-E4B-it-Q4_K_M.gguf');
     expect(r.openai).toContain('gpt-4o');
     expect(r.anthropic).toContain('claude-3-5-sonnet-20241022');
     expect(r.google).toContain('gemini-1.5-pro');
@@ -210,19 +212,21 @@ test.describe('API Client — Provider Helpers', () => {
 
   test('getDefaultModel returns correct defaults', async ({ page }) => {
     const r = await page.evaluate(() => ({
+      local: getDefaultModel('local'),
       openai: getDefaultModel('openai'),
       anthropic: getDefaultModel('anthropic'),
       google: getDefaultModel('google')
     }));
+    expect(r.local).toBe('gemma-4-E4B-it-Q4_K_M.gguf');
     expect(r.openai).toBe('gpt-4o');
     expect(r.anthropic).toBe('claude-3-5-sonnet-20241022');
     expect(r.google).toBe('gemini-1.5-pro');
   });
 
-  test('getProviderNames returns 3 providers', async ({ page }) => {
+  test('getProviderNames returns 4 providers', async ({ page }) => {
     const r = await page.evaluate(() => getProviderNames());
-    expect(r).toHaveLength(3);
-    expect(r.map(p => p.key).sort()).toEqual(['anthropic', 'google', 'openai']);
+    expect(r).toHaveLength(4);
+    expect(r.map(p => p.key).sort()).toEqual(['anthropic', 'google', 'local', 'openai']);
   });
 });
 
@@ -358,12 +362,16 @@ test.describe('Storage Module (mocked)', () => {
       provider: await get(STORAGE_KEYS.PROVIDER),
       model: await get(STORAGE_KEYS.MODEL),
       suggestions: await get(STORAGE_KEYS.SUGGESTION_COUNT),
-      apiKey: await get(STORAGE_KEYS.API_KEY)
+      apiKey: await get(STORAGE_KEYS.API_KEY),
+      localEndpoint: await get(STORAGE_KEYS.LOCAL_ENDPOINT),
+      localModel: await get(STORAGE_KEYS.LOCAL_MODEL)
     }));
-    expect(r.provider).toBe('openai');
-    expect(r.model).toBe('gpt-4o');
+    expect(r.provider).toBe('local');
+    expect(r.model).toBe('gemma-4-E4B-it-Q4_K_M.gguf');
     expect(r.suggestions).toBe(3);
     expect(r.apiKey).toBe('');
+    expect(r.localEndpoint).toBe('http://localhost:8080/v1/chat/completions');
+    expect(r.localModel).toBe('gemma-4-E4B-it-Q4_K_M.gguf');
   });
 
   test('set and get round-trip', async ({ page }) => {
@@ -384,7 +392,7 @@ test.describe('Storage Module (mocked)', () => {
       const keys = Object.keys(all);
       return { keyCount: keys.length, hasProvider: all[STORAGE_KEYS.PROVIDER] !== undefined };
     });
-    expect(r.keyCount).toBeGreaterThanOrEqual(10);
+    expect(r.keyCount).toBeGreaterThanOrEqual(12);
     expect(r.hasProvider).toBe(true);
   });
 
@@ -394,7 +402,7 @@ test.describe('Storage Module (mocked)', () => {
       await resetToDefaults();
       return await get(STORAGE_KEYS.PROVIDER);
     });
-    expect(r).toBe('openai');
+    expect(r).toBe('local');
   });
 
   test('addRecentCapture prepends and trims to 5', async ({ page }) => {
@@ -664,7 +672,7 @@ test.describe('User Pointer Injection', () => {
 
     const btn = page.locator('#capture-btn');
     await expect(btn).toBeVisible();
-    await expect(btn).toHaveText(/Capture.*Suggest/);
+    await expect(btn).toHaveText(/capture.*suggest/i);
     await expect(btn).not.toBeDisabled();
   });
 
@@ -845,18 +853,18 @@ test.describe('Store constants completeness', () => {
   test('STORAGE_KEYS has all required constants', async ({ page }) => {
     await page.goto(`file://${HARNESS_PATH}`);
     const keys = await page.evaluate(() => Object.keys(STORAGE_KEYS));
-    const required = ['PROVIDER', 'MODEL', 'API_KEY', 'CUSTOM_SYSTEM_PROMPT',
-      'CUSTOM_USER_PROMPT_TEMPLATE', 'THEME', 'SUGGESTION_COUNT',
+    const required = ['PROVIDER', 'MODEL', 'API_KEY', 'LOCAL_ENDPOINT', 'LOCAL_MODEL',
+      'CUSTOM_SYSTEM_PROMPT', 'CUSTOM_USER_PROMPT_TEMPLATE', 'THEME', 'SUGGESTION_COUNT',
       'IMAGE_QUALITY', 'IMAGE_MAX_DIMENSION', 'RECENT_CAPTURES'];
     for (const k of required) {
       expect(keys).toContain(k);
     }
   });
 
-  test('PROVIDERS has OpenAI, Anthropic, Google', async ({ page }) => {
+  test('PROVIDERS has Local, OpenAI, Anthropic, Google', async ({ page }) => {
     await page.goto(`file://${HARNESS_PATH}`);
     const keys = await page.evaluate(() => Object.keys(PROVIDERS));
-    expect(keys.sort()).toEqual(['anthropic', 'google', 'openai']);
+    expect(keys.sort()).toEqual(['anthropic', 'google', 'local', 'openai']);
   });
 
   test('each provider has required methods', async ({ page }) => {

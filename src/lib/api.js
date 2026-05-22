@@ -1,4 +1,43 @@
 const PROVIDERS = {
+  local: {
+    name: 'Local / Ollama',
+    models: ['gemma-4-E4B-it-Q4_K_M.gguf', 'minicpm-v', 'llava', 'llava-phi3', 'bakllava', 'gemma3:12b'],
+    defaultModel: 'gemma-4-E4B-it-Q4_K_M.gguf',
+    endpoint: '',
+
+    buildHeaders(apiKey) {
+      const headers = { 'Content-Type': 'application/json' };
+      if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
+      return headers;
+    },
+
+    buildPayload(model, systemPrompt, userPrompt, imageBase64, imageMediaType) {
+      return {
+        model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'image_url',
+                image_url: { url: `data:${imageMediaType};base64,${imageBase64}` }
+              },
+              { type: 'text', text: userPrompt }
+            ]
+          }
+        ],
+        max_tokens: 32768,
+        temperature: 0.7,
+        stream: false
+      };
+    },
+
+    parseResponse(data) {
+      return safeParseJson(data.choices[0].message.content);
+    }
+  },
+
   openai: {
     name: 'OpenAI',
     models: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo'],
@@ -32,7 +71,7 @@ const PROVIDERS = {
             ]
           }
         ],
-        max_tokens: 1024,
+        max_tokens: 32768,
         temperature: 0.7,
         response_format: { type: 'json_object' }
       };
@@ -57,7 +96,7 @@ const PROVIDERS = {
     buildPayload(model, systemPrompt, userPrompt, imageBase64, imageMediaType) {
       return {
         model,
-        max_tokens: 1024,
+        max_tokens: 32768,
         temperature: 0.7,
         system: systemPrompt,
         messages: [
@@ -112,7 +151,7 @@ const PROVIDERS = {
           }
         ],
         generationConfig: {
-          maxOutputTokens: 1024,
+          maxOutputTokens: 32768,
           temperature: 0.7,
           responseMimeType: 'application/json'
         }
@@ -127,10 +166,14 @@ const PROVIDERS = {
   }
 };
 
-async function callLLM(providerKey, model, apiKey, systemPrompt, userPrompt, imageDataUrl) {
+async function callLLM(providerKey, model, apiKey, systemPrompt, userPrompt, imageDataUrl, options = {}) {
   const provider = PROVIDERS[providerKey];
   if (!provider) {
     throw new Error(`Unknown provider: ${providerKey}`);
+  }
+
+  if (!imageDataUrl) {
+    throw new Error('No image provided. A screenshot is required.');
   }
 
   const imageBase64 = imageDataUrl.split(',')[1];
@@ -138,10 +181,10 @@ async function callLLM(providerKey, model, apiKey, systemPrompt, userPrompt, ima
 
   const payload = provider.buildPayload(model, systemPrompt, userPrompt, imageBase64, imageMediaType);
   const headers = provider.buildHeaders(apiKey);
-  const endpoint = provider.getEndpoint ? provider.getEndpoint(model) : provider.endpoint;
+  const endpoint = options.endpoint || (provider.getEndpoint ? provider.getEndpoint(model) : provider.endpoint);
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30000);
+  const timeoutId = setTimeout(() => controller.abort(), 120000);
 
   try {
     const response = await fetch(endpoint, {
@@ -196,7 +239,7 @@ function getModelsForProvider(providerKey) {
 
 function getDefaultModel(providerKey) {
   const provider = PROVIDERS[providerKey];
-  return provider ? provider.defaultModel : 'gpt-4o';
+  return provider ? provider.defaultModel : 'gemma-4-E4B-it-Q4_K_M.gguf';
 }
 
 function getProviderNames() {
