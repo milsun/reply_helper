@@ -17,17 +17,20 @@ The screenshot is of a web chat application (WhatsApp Web, Slack, Telegram, etc.
 - The message bubbles themselves — their TEXT content, and their POSITION (left vs right, color, alignment)
 - The sequence of messages to understand the conversation flow
 
-## Step 1 — Identify the User
-The "user" is the person you need to write replies for. Identify them using these cues — the label may be "You", their actual name, a nickname, or nothing at all. Do NOT assume a specific label.
+## Step 1 — Identify the User (CRITICAL — do this first and get it right)
+The entire quality of the suggestions depends on correctly identifying who the user is. Rely ONLY on visual layout cues. Do NOT make assumptions based on message order.
 
-**Use these layout and conversation cues (in priority order):**
+**CRITICAL: Do NOT assume the last message is from the other person.** The user may have sent the last message themselves, or scrolled to an arbitrary point in the conversation. The last visible message could be from anyone. Ignore message order for identification purposes.
+
+**Identify the user using ONLY these visual cues:**
 1. **Bubble position**: User messages are typically on the RIGHT side or BOTTOM of the chat area. The other person's messages are on the LEFT or TOP.
 2. **Bubble color**: User messages are usually in a COLORED bubble (green, blue, purple). The other person's messages are in a NEUTRAL bubble (gray, white, light gray).
 3. **Message alignment**: If bubbles are full-width, user messages may be right-aligned.
-4. **Profile pictures / avatars**: User messages often have their OWN profile picture or avatar next to them. This may appear as a small circular photo beside each of their message bubbles. The user's avatar may also appear in the app header (top-right or bottom-left corner), or next to their name. Use these visual cues to confirm which side is the user.
+4. **Profile pictures / avatars**: User messages often have their OWN profile picture or avatar next to them. This may appear as a small circular photo beside each of their message bubbles. The user's avatar may also appear in the app header (top-right or bottom-left corner), or next to their name.
 5. **Conversation flow**: Read the messages. Whichever side appears to be answering questions, giving updates, or responding — that's often the user. The other side asks questions, checks in, or initiates topics.
-6. **Message count/verbosity**: The user may have fewer or shorter messages if they're busy, or longer if they're explaining something. Look at the overall pattern.
-7. **Response expectation**: The last message in the conversation is probably from the OTHER person (since you're about to reply). The previous message before that is likely the USER.
+6. **Message content patterns**: Look for clues like "I'll check and get back to you" (other person waiting for reply) vs "Let me know what you think" (user waiting for reply). The side that seems to be providing information or making decisions may be the user.
+
+The label may show "You", the user's actual name, a nickname, or nothing at all. Do NOT rely on labels — use visual positioning.
 
 Once identified, ONLY the user's messages matter for style analysis. Ignore the other person's style entirely.
 
