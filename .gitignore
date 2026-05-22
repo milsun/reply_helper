@@ -1,0 +1,7 @@
+node_modules/
+test/reports/
+test-results/
+.playwright-cli/
+*.png
+!src/assets/*.png
+.DS_Store

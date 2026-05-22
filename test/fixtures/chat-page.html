@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Chat - Reply Helper E2E</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #111b21;
+      display: flex; justify-content: center; align-items: center;
+      min-height: 100vh;
+    }
+    .chat-container {
+      width: 100%; max-width: 700px; height: 90vh;
+      background: #0b141a;
+      display: flex; flex-direction: column;
+      border: 1px solid #2a3942;
+    }
+    .chat-header {
+      padding: 14px 20px; background: #202c33;
+      border-bottom: 1px solid #2a3942;
+      color: #e9edef; font-size: 15px; font-weight: 600;
+    }
+    .chat-messages {
+      flex: 1; overflow-y: auto; padding: 20px;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .message {
+      display: flex; flex-direction: column; max-width: 70%;
+    }
+    .message.received { align-self: flex-start; }
+    .message.sent { align-self: flex-end; }
+    .message-sender {
+      font-size: 12px; color: #8696a0; margin-bottom: 3px; padding: 0 6px;
+    }
+    .message-bubble {
+      padding: 8px 14px; border-radius: 8px; font-size: 14px;
+      line-height: 1.5; color: #e9edef;
+      word-wrap: break-word;
+    }
+    .message.received .message-bubble {
+      background: #202c33;
+      border-top-left-radius: 0;
+    }
+    .message.sent .message-bubble {
+      background: #005c4b;
+      border-top-right-radius: 0;
+    }
+    .message-time {
+      font-size: 11px; color: #8696a0; margin-top: 4px; padding: 0 6px;
+    }
+    .message.sent .message-time { text-align: right; }
+    .chat-input-area {
+      padding: 12px 20px; background: #202c33;
+      display: flex; gap: 10px; align-items: center;
+    }
+    .chat-input {
+      flex: 1; padding: 10px 16px; border: none; border-radius: 8px;
+      background: #2a3942; color: #e9edef; font-size: 14px;
+      font-family: inherit; outline: none;
+    }
+    .chat-input::placeholder { color: #8696a0; }
+    .send-btn {
+      padding: 8px 18px; background: #005c4b; color: #e9edef;
+      border: none; border-radius: 8px; font-size: 14px; cursor: pointer;
+      font-weight: 500;
+    }
+    .send-btn:hover { background: #007a62; }
+    .typing-indicator {
+      font-size: 12px; color: #00a884; padding: 0 20px 8px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <div class="chat-header">
+      <span>Priya Sharma</span>
+    </div>
+
+    <div class="chat-messages" id="chat-messages">
+      <div class="message received">
+        <div class="message-sender">Priya</div>
+        <div class="message-bubble">Hey! How's the project coming along? Haven't heard from you in a while.</div>
+        <div class="message-time">10:30 AM</div>
+      </div>
+
+      <div class="message sent">
+        <div class="message-sender">You</div>
+        <div class="message-bubble">Hey Priya! Sorry for the radio silence. Been heads-down on the deployment. Things are going well but we hit a few snags with the database migration.</div>
+        <div class="message-time">10:32 AM</div>
+      </div>
+
+      <div class="message received">
+        <div class="message-sender">Priya</div>
+        <div class="message-bubble">Oh no, what kind of snags? Anything I can help with?</div>
+        <div class="message-time">10:33 AM</div>
+      </div>
+
+      <div class="message sent">
+        <div class="message-sender">You</div>
+        <div class="message-bubble">Mostly just indexing issues on the new tables. Nothing critical, but it's slowing down some queries. We're working on it.</div>
+        <div class="message-time">10:34 AM</div>
+      </div>
+
+      <div class="message received">
+        <div class="message-sender">Priya</div>
+        <div class="message-bubble">Got it. Are we still on track for the demo next Friday? The client's been asking.</div>
+        <div class="message-time">10:35 AM</div>
+      </div>
+
+      <div class="message sent">
+        <div class="message-sender">You</div>
+        <div class="message-bubble">I think so. We should have the major issues sorted by Wednesday. Fingers crossed! 🤞</div>
+        <div class="message-time">10:36 AM</div>
+      </div>
+
+      <div class="message received">
+        <div class="message-sender">Priya</div>
+        <div class="message-bubble">That's great to hear. Also, I wanted to ask — are you free for lunch this Saturday? There's a new Thai place that opened near the office.</div>
+        <div class="message-time">10:37 AM</div>
+      </div>
+    </div>
+
+    <div class="typing-indicator" id="typing-indicator">Priya is typing...</div>
+
+    <div class="chat-input-area">
+      <input type="text" class="chat-input" id="chat-input" placeholder="Type a message" />
+      <button class="send-btn" id="send-btn">Send</button>
+    </div>
+  </div>
+
+  <script>
+    const chatInput = document.getElementById('chat-input');
+    const sendBtn = document.getElementById('send-btn');
+    const messagesContainer = document.getElementById('chat-messages');
+    const typingIndicator = document.getElementById('typing-indicator');
+
+    function addMessage(text, type, sender) {
+      const msg = document.createElement('div');
+      msg.className = `message ${type}`;
+      const now = new Date();
+      const time = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+      msg.innerHTML = `
+        <div class="message-sender">${sender}</div>
+        <div class="message-bubble">${text}</div>
+        <div class="message-time">${time} PM</div>
+      `;
+      messagesContainer.appendChild(msg);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    sendBtn.addEventListener('click', () => {
+      const text = chatInput.value.trim();
+      if (!text) return;
+      addMessage(text, 'sent', 'You');
+      chatInput.value = '';
+
+      typingIndicator.style.display = 'block';
+      setTimeout(() => {
+        typingIndicator.style.display = 'none';
+        addMessage('Sounds good! Let me check my calendar and get back to you.', 'received', 'Priya');
+      }, 1500);
+    });
+
+    chatInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') sendBtn.click();
+    });
+  </script>
+</body>
+</html>

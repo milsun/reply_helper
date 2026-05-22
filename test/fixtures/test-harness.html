@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Harness - Reply Helper</title>
+</head>
+<body>
+  <h1>Reply Helper — Test Harness</h1>
+  <div id="results"></div>
+
+  <script>
+    const chrome = {
+      storage: {
+        local: {
+          _data: {},
+          async get(keys) {
+            if (Array.isArray(keys)) {
+              const result = {};
+              for (const k of keys) {
+                result[k] = this._data[k] !== undefined ? this._data[k] : undefined;
+              }
+              return result;
+            }
+            if (typeof keys === 'string') {
+              return { [keys]: this._data[keys] !== undefined ? this._data[keys] : undefined };
+            }
+            const result = {};
+            for (const k of Object.keys(keys || {})) {
+              result[k] = this._data[k] !== undefined ? this._data[k] : undefined;
+            }
+            return result;
+          },
+          async set(items) {
+            Object.assign(this._data, items);
+          },
+          async clear() {
+            this._data = {};
+          }
+        }
+      },
+      tabs: {
+        async captureVisibleTab() {
+          const canvas = document.createElement('canvas');
+          canvas.width = 800;
+          canvas.height = 600;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#0b141a';
+          ctx.fillRect(0, 0, 800, 600);
+          ctx.fillStyle = '#e9edef';
+          ctx.font = '14px sans-serif';
+          ctx.fillText('Test Chat - E2E Testing', 50, 300);
+          return canvas.toDataURL('image/png');
+        }
+      },
+      runtime: {
+        openOptionsPage() {},
+        sendMessage() {}
+      },
+      commands: {
+        onCommand: {
+          addListener() {}
+        }
+      }
+    };
+  </script>
+
+  <script src="../../src/lib/storage.js"></script>
+  <script src="../../src/lib/prompts.js"></script>
+  <script src="../../src/lib/capture.js"></script>
+  <script src="../../src/lib/utils.js"></script>
+  <script src="../../src/lib/api.js"></script>
+</body>
+</html>

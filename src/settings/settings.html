@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reply Helper — Settings</title>
+  <link rel="stylesheet" href="settings.css">
+</head>
+<body>
+  <div class="settings-container">
+    <header class="settings-header">
+      <h1>Reply Helper</h1>
+      <span class="settings-subtitle">Settings</span>
+    </header>
+
+    <main class="settings-content">
+      <section class="settings-section">
+        <h2>Provider</h2>
+        <div class="form-group">
+          <label for="provider-select">AI Provider</label>
+          <select id="provider-select" class="form-select">
+            <option value="openai">OpenAI</option>
+            <option value="anthropic">Anthropic (Claude)</option>
+            <option value="google">Google Gemini</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="model-select">Model</label>
+          <select id="model-select" class="form-select">
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="api-key-input">API Key</label>
+          <div class="api-key-wrapper">
+            <input
+              type="password"
+              id="api-key-input"
+              class="form-input"
+              placeholder="Enter your API key"
+              autocomplete="off"
+            />
+            <button type="button" id="toggle-api-key" class="icon-btn" title="Show/Hide API Key">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+          <span id="api-key-hint" class="form-hint"></span>
+        </div>
+      </section>
+
+      <section class="settings-section">
+        <h2>Suggestions</h2>
+        <div class="form-group">
+          <label for="suggestion-count-range">
+            Number of suggestions: <span id="count-display">3</span>
+          </label>
+          <input
+            type="range"
+            id="suggestion-count-range"
+            class="form-range"
+            min="2"
+            max="5"
+            value="3"
+            step="1"
+          />
+        </div>
+      </section>
+
+      <section class="settings-section">
+        <h2>Image Quality</h2>
+        <div class="form-group">
+          <label for="quality-range">
+            Compression: <span id="quality-display">85%</span>
+          </label>
+          <input
+            type="range"
+            id="quality-range"
+            class="form-range"
+            min="10"
+            max="100"
+            value="85"
+            step="5"
+          />
+          <span class="form-hint">Lower quality = faster responses, smaller data usage</span>
+        </div>
+      </section>
+
+      <section class="settings-section settings-advanced">
+        <h2>
+          Advanced
+          <button type="button" id="toggle-advanced" class="link-btn">Show</button>
+        </h2>
+        <div id="advanced-content" class="advanced-content hidden">
+          <div class="form-group">
+            <label for="custom-system-prompt">Custom System Prompt (overrides default)</label>
+            <textarea
+              id="custom-system-prompt"
+              class="form-textarea"
+              rows="6"
+              placeholder="Leave empty to use the default system prompt"
+            ></textarea>
+          </div>
+          <div class="form-group">
+            <label for="custom-user-template">Custom User Prompt Template</label>
+            <textarea
+              id="custom-user-template"
+              class="form-textarea"
+              rows="3"
+              placeholder="Use {userPointer} as placeholder for the user's input"
+            ></textarea>
+          </div>
+        </div>
+      </section>
+
+      <div class="settings-actions">
+        <button type="button" id="reset-btn" class="btn btn-secondary">Reset to Defaults</button>
+      </div>
+    </main>
+
+    <footer class="settings-footer">
+      <span>Changes are saved automatically</span>
+    </footer>
+  </div>
+
+  <script src="../lib/storage.js"></script>
+  <script src="../lib/api.js"></script>
+  <script src="settings.js"></script>
+</body>
+</html>

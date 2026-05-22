@@ -1,0 +1,46 @@
+{
+  "manifest_version": 3,
+  "name": "Reply Helper",
+  "version": "1.0.0",
+  "description": "Capture chat screenshots and get AI-powered reply suggestions based on conversation context.",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "commands"
+  ],
+  "host_permissions": [
+    "https://api.openai.com/*",
+    "https://api.anthropic.com/*",
+    "https://generativelanguage.googleapis.com/*"
+  ],
+  "action": {
+    "default_popup": "src/popup/popup.html",
+    "default_title": "Reply Helper",
+    "default_icon": {
+      "16": "src/assets/icon16.png",
+      "48": "src/assets/icon48.png",
+      "128": "src/assets/icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "src/background/service-worker.js"
+  },
+  "commands": {
+    "capture-suggest": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+R",
+        "mac": "Command+Shift+R"
+      },
+      "description": "Capture screenshot and get reply suggestions"
+    }
+  },
+  "options_ui": {
+    "page": "src/settings/settings.html",
+    "open_in_tab": true
+  },
+  "icons": {
+    "16": "src/assets/icon16.png",
+    "48": "src/assets/icon48.png",
+    "128": "src/assets/icon128.png"
+  }
+}
