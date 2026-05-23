@@ -179,7 +179,12 @@ async function callLLM(providerKey, model, apiKey, systemPrompt, userPrompt, ima
   const payload = provider.buildPayload(model, systemPrompt, userPrompt, imageBase64, imageMediaType);
 
   if (options.thinking) {
-    payload.chat_template_kwargs = { enable_thinking: true };
+    if (providerKey === 'google') {
+      payload.generationConfig = payload.generationConfig || {};
+      payload.generationConfig.thinkingConfig = { thinkingBudget: 1024 };
+    } else {
+      payload.chat_template_kwargs = { enable_thinking: true };
+    }
   }
   const headers = provider.buildHeaders(apiKey);
   const endpoint = options.endpoint || (provider.getEndpoint ? provider.getEndpoint(model) : provider.endpoint);
