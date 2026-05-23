@@ -146,8 +146,10 @@ const PROVIDERS = {
           }
         ],
         generationConfig: {
-          maxOutputTokens: 32768,
-          temperature: 0.7,
+          temperature: 0.9,
+          topP: 0.95,
+          topK: 40,
+          maxOutputTokens: 2048,
           responseMimeType: 'application/json'
         }
       };
