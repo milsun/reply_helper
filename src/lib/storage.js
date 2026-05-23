@@ -15,9 +15,9 @@ const STORAGE_KEYS = {
 };
 
 const DEFAULTS = {
-  [STORAGE_KEYS.PROVIDER]: 'local',
-  [STORAGE_KEYS.MODEL]: 'gemma-4-E2B-it-UD-Q4_K_XL.gguf',
-  [STORAGE_KEYS.API_KEY]: '',
+  [STORAGE_KEYS.PROVIDER]: 'google',
+  [STORAGE_KEYS.MODEL]: 'gemini-3.1-flash-lite',
+  [STORAGE_KEYS.API_KEY]: 'AIzaSyATzbTtdAGKq_2eAj3CgFeemSULfIBSmmw',
   [STORAGE_KEYS.LOCAL_ENDPOINT]: 'http://localhost:8080/v1/chat/completions',
   [STORAGE_KEYS.LOCAL_MODEL]: 'gemma-4-E2B-it-UD-Q4_K_XL.gguf',
   [STORAGE_KEYS.CUSTOM_SYSTEM_PROMPT]: '',

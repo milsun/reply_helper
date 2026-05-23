@@ -55,8 +55,8 @@ test.describe('API Client — Payload Construction', () => {
     expect(headers['x-goog-api-key']).toBe('test-key-123');
     expect(headers['Content-Type']).toBe('application/json');
 
-    const url = await page.evaluate(() => PROVIDERS.google.getEndpoint('gemini-1.5-pro'));
-    expect(url).toContain('gemini-1.5-pro');
+    const url = await page.evaluate(() => PROVIDERS.google.getEndpoint('gemini-3.1-flash-lite'));
+    expect(url).toContain('gemini-3.1-flash-lite');
     expect(url).not.toContain('key=');
   });
 });
@@ -206,7 +206,7 @@ test.describe('API Client — Provider Helpers', () => {
     expect(r.local).toContain('gemma-4-E2B-it-UD-Q4_K_XL.gguf');
     expect(r.openai).toContain('gpt-4o');
     expect(r.anthropic).toContain('claude-3-5-sonnet-20241022');
-    expect(r.google).toContain('gemini-1.5-pro');
+    expect(r.google).toContain('gemini-3.1-flash-lite');
     expect(r.unknown).toEqual([]);
   });
 
@@ -220,7 +220,7 @@ test.describe('API Client — Provider Helpers', () => {
     expect(r.local).toBe('gemma-4-E2B-it-UD-Q4_K_XL.gguf');
     expect(r.openai).toBe('gpt-4o');
     expect(r.anthropic).toBe('claude-3-5-sonnet-20241022');
-    expect(r.google).toBe('gemini-1.5-pro');
+    expect(r.google).toBe('gemini-3.1-flash-lite');
   });
 
   test('getProviderNames returns 4 providers', async ({ page }) => {
@@ -366,10 +366,10 @@ test.describe('Storage Module (mocked)', () => {
       localEndpoint: await get(STORAGE_KEYS.LOCAL_ENDPOINT),
       localModel: await get(STORAGE_KEYS.LOCAL_MODEL)
     }));
-    expect(r.provider).toBe('local');
-    expect(r.model).toBe('gemma-4-E2B-it-UD-Q4_K_XL.gguf');
+    expect(r.provider).toBe('google');
+    expect(r.model).toBe('gemini-3.1-flash-lite');
     expect(r.suggestions).toBe(3);
-    expect(r.apiKey).toBe('');
+    expect(r.apiKey).toBe('AIzaSyATzbTtdAGKq_2eAj3CgFeemSULfIBSmmw');
     expect(r.localEndpoint).toBe('http://localhost:8080/v1/chat/completions');
     expect(r.localModel).toBe('gemma-4-E2B-it-UD-Q4_K_XL.gguf');
   });
@@ -402,7 +402,7 @@ test.describe('Storage Module (mocked)', () => {
       await resetToDefaults();
       return await get(STORAGE_KEYS.PROVIDER);
     });
-    expect(r).toBe('local');
+    expect(r).toBe('google');
   });
 
   test('addRecentCapture prepends and trims to 5', async ({ page }) => {
