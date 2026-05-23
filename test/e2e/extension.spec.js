@@ -392,7 +392,7 @@ test.describe('Storage Module (mocked)', () => {
       const keys = Object.keys(all);
       return { keyCount: keys.length, hasProvider: all[STORAGE_KEYS.PROVIDER] !== undefined };
     });
-    expect(r.keyCount).toBeGreaterThanOrEqual(12);
+    expect(r.keyCount).toBeGreaterThanOrEqual(13);
     expect(r.hasProvider).toBe(true);
   });
 
@@ -854,7 +854,8 @@ test.describe('Store constants completeness', () => {
     await page.goto(`file://${HARNESS_PATH}`);
     const keys = await page.evaluate(() => Object.keys(STORAGE_KEYS));
     const required = ['PROVIDER', 'MODEL', 'API_KEY', 'LOCAL_ENDPOINT', 'LOCAL_MODEL',
-      'CUSTOM_SYSTEM_PROMPT', 'CUSTOM_USER_PROMPT_TEMPLATE', 'THEME', 'SUGGESTION_COUNT',
+      'CUSTOM_SYSTEM_PROMPT', 'CUSTOM_USER_PROMPT_TEMPLATE', 'THEME',
+      'ENABLE_THINKING', 'SUGGESTION_COUNT', 'STORAGE_VERSION',
       'IMAGE_QUALITY', 'IMAGE_MAX_DIMENSION', 'RECENT_CAPTURES'];
     for (const k of required) {
       expect(keys).toContain(k);

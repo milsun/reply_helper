@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', async () => {
+  await migrateIfNeeded();
   const elements = {
     providerSelect: document.getElementById('provider-select'),
     modelSelect: document.getElementById('model-select'),

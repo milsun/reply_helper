@@ -286,6 +286,7 @@ els.thinkingCheck.addEventListener('change', async () => {
 });
 
 document.addEventListener('DOMContentLoaded', async () => {
+  await migrateIfNeeded();
   els.thinkingCheck.checked = await get(STORAGE_KEYS.ENABLE_THINKING);
   $('model-badge').textContent = '';
   if (!await checkPending()) showState('empty');

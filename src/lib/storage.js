@@ -11,10 +11,14 @@ const STORAGE_KEYS = {
   SUGGESTION_COUNT: 'suggestionCount',
   IMAGE_QUALITY: 'imageQuality',
   IMAGE_MAX_DIMENSION: 'imageMaxDimension',
-  RECENT_CAPTURES: 'recentCaptures'
+  RECENT_CAPTURES: 'recentCaptures',
+  STORAGE_VERSION: 'storageVersion'
 };
 
+const CURRENT_VERSION = 2;
+
 const DEFAULTS = {
+  [STORAGE_KEYS.STORAGE_VERSION]: CURRENT_VERSION,
   [STORAGE_KEYS.PROVIDER]: 'google',
   [STORAGE_KEYS.MODEL]: 'gemini-3.1-flash-lite',
   [STORAGE_KEYS.API_KEY]: 'AIzaSyATzbTtdAGKq_2eAj3CgFeemSULfIBSmmw',
@@ -80,4 +84,11 @@ async function addRecentCapture(captureData) {
   });
   const trimmed = recent.slice(0, 5);
   await set(STORAGE_KEYS.RECENT_CAPTURES, trimmed);
+}
+
+async function migrateIfNeeded() {
+  const storedVersion = await get(STORAGE_KEYS.STORAGE_VERSION);
+  if (!storedVersion || storedVersion < CURRENT_VERSION) {
+    await resetToDefaults();
+  }
 }
