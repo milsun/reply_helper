@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     toggleApiKey: document.getElementById('toggle-api-key'),
     localSettings: document.getElementById('local-settings'),
     localEndpointInput: document.getElementById('local-endpoint-input'),
+    modelSelectGroup: document.getElementById('model-select-group'),
+    localModelGroup: document.getElementById('local-model-group'),
     localModelSelect: document.getElementById('local-model-select'),
     localModelInput: document.getElementById('local-model-input'),
     fetchModelsBtn: document.getElementById('fetch-models-btn'),
@@ -87,6 +89,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   function toggleLocalSettings(providerKey) {
     const isLocal = providerKey === 'local';
     elements.localSettings.classList.toggle('visible', isLocal);
+    elements.modelSelectGroup.style.display = isLocal ? 'none' : '';
+    elements.localModelGroup.style.display = isLocal ? '' : 'none';
     elements.apiKeyHint.textContent = isLocal ? 'Optional — leave empty if no auth is required' : (savedApiKey ? 'API key configured' : 'No API key set');
     if (isLocal && fetchedModels.length === 0) {
       populateLocalModelSelect(['gemma-4-E2B-it-UD-Q4_K_XL.gguf']);
