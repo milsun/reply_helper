@@ -7,7 +7,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     toggleApiKey: document.getElementById('toggle-api-key'),
     localSettings: document.getElementById('local-settings'),
     localEndpointInput: document.getElementById('local-endpoint-input'),
+    localModelSelect: document.getElementById('local-model-select'),
     localModelInput: document.getElementById('local-model-input'),
+    fetchModelsBtn: document.getElementById('fetch-models-btn'),
     suggestionCount: document.getElementById('suggestion-count-range'),
     countDisplay: document.getElementById('count-display'),
     qualityRange: document.getElementById('quality-range'),
@@ -20,6 +22,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   };
 
   let savedApiKey = '';
+  let fetchedModels = [];
 
   function populateModelSelect(providerKey) {
     const models = getModelsForProvider(providerKey);
@@ -32,11 +35,62 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
+  function populateLocalModelSelect(models) {
+    elements.localModelSelect.innerHTML = '';
+    models.forEach(model => {
+      const option = document.createElement('option');
+      option.value = model;
+      option.textContent = model;
+      elements.localModelSelect.appendChild(option);
+    });
+    const option = document.createElement('option');
+    option.value = '__custom__';
+    option.textContent = '-- Custom (typed below) --';
+    option.disabled = true;
+    elements.localModelSelect.appendChild(option);
+  }
+
+  async function fetchModels() {
+    elements.fetchModelsBtn.disabled = true;
+    elements.fetchModelsBtn.textContent = '...';
+    try {
+      let endpoint = elements.localEndpointInput.value.trim();
+      if (!endpoint.endsWith('/chat/completions')) {
+        endpoint = endpoint.replace(/\/+$/, '') + '/chat/completions';
+      }
+      fetchedModels = await fetchLocalModels(endpoint);
+      populateLocalModelSelect(fetchedModels);
+      const currentModel = await get(STORAGE_KEYS.LOCAL_MODEL);
+      if (fetchedModels.includes(currentModel)) {
+        elements.localModelSelect.value = currentModel;
+      } else {
+        elements.localModelSelect.value = fetchedModels[0];
+        elements.localModelInput.value = currentModel;
+      }
+      elements.fetchModelsBtn.textContent = '✓';
+    } catch (e) {
+      elements.fetchModelsBtn.textContent = '✗';
+      showToast('Could not fetch models. Check endpoint.');
+    } finally {
+      setTimeout(() => { elements.fetchModelsBtn.disabled = false; elements.fetchModelsBtn.textContent = 'Fetch'; }, 2000);
+    }
+  }
+
+  function showToast(msg) {
+    const t = document.createElement('div');
+    t.textContent = msg;
+    t.style.cssText = 'position:fixed;bottom:16px;left:50%;transform:translateX(-50%);padding:8px 18px;background:#0a0a0a;color:#fff;font-size:12px;border-radius:8px;z-index:1000;font-family:inherit;';
+    document.body.appendChild(t);
+    setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity 0.3s'; setTimeout(() => t.remove(), 300); }, 2500);
+  }
+
   function toggleLocalSettings(providerKey) {
     const isLocal = providerKey === 'local';
     elements.localSettings.classList.toggle('visible', isLocal);
-    elements.apiKeyInput.parentElement.classList.toggle('local-provider', isLocal);
     elements.apiKeyHint.textContent = isLocal ? 'Optional — leave empty if no auth is required' : (savedApiKey ? 'API key configured' : 'No API key set');
+    if (isLocal && fetchedModels.length === 0) {
+      populateLocalModelSelect(['gemma-4-E2B-it-UD-Q4_K_XL.gguf']);
+    }
   }
 
   async function loadSettings() {
@@ -64,6 +118,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     elements.localEndpointInput.value = localEndpoint;
     elements.localModelInput.value = localModel;
+
+    if (fetchedModels.includes(localModel)) {
+      elements.localModelSelect.value = localModel;
+    } else {
+      elements.localModelInput.value = localModel;
+    }
 
     elements.suggestionCount.value = suggestionCount;
     elements.countDisplay.textContent = suggestionCount;
@@ -95,6 +155,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     await saveSetting(STORAGE_KEYS.MODEL, e.target.value);
   });
 
+  elements.localModelSelect.addEventListener('change', async (e) => {
+    if (e.target.value !== '__custom__') {
+      elements.localModelInput.value = e.target.value;
+      await saveSetting(STORAGE_KEYS.LOCAL_MODEL, e.target.value);
+    }
+  });
+
   let apiKeyTimer;
   elements.apiKeyInput.addEventListener('input', async (e) => {
     savedApiKey = e.target.value;
@@ -120,7 +187,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   elements.localEndpointInput.addEventListener('input', () => {
     clearTimeout(localEndpointTimer);
     localEndpointTimer = setTimeout(async () => {
-      await saveSetting(STORAGE_KEYS.LOCAL_ENDPOINT, elements.localEndpointInput.value.trim() || 'http://localhost:11434/v1');
+      const val = elements.localEndpointInput.value.trim() || 'http://localhost:8080/v1/chat/completions';
+      await saveSetting(STORAGE_KEYS.LOCAL_ENDPOINT, val);
     }, 500);
   });
 
@@ -129,9 +197,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     clearTimeout(localModelTimer);
     localModelTimer = setTimeout(async () => {
       const val = elements.localModelInput.value.trim();
-      await saveSetting(STORAGE_KEYS.LOCAL_MODEL, val || 'minicpm-v');
+      await saveSetting(STORAGE_KEYS.LOCAL_MODEL, val || 'gemma-4-E2B-it-UD-Q4_K_XL.gguf');
     }, 500);
   });
+
+  elements.fetchModelsBtn.addEventListener('click', fetchModels);
 
   elements.suggestionCount.addEventListener('input', async (e) => {
     const count = parseInt(e.target.value);
@@ -168,6 +238,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   elements.resetBtn.addEventListener('click', async () => {
     await resetToDefaults();
+    fetchedModels = [];
     await loadSettings();
   });
 

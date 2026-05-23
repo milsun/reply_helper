@@ -253,6 +253,17 @@ function getProviderNames() {
   }));
 }
 
+async function fetchLocalModels(endpoint) {
+  const base = endpoint.replace(/\/chat\/completions\/?$/, '').replace(/\/+$/, '');
+  const url = `${base}/v1/models`;
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error(`Server returned ${resp.status}`);
+  const data = await resp.json();
+  const models = (data.data || []).map(m => m.id).filter(Boolean);
+  if (models.length === 0) throw new Error('No models found on server');
+  return models;
+}
+
 function safeParseJson(text) {
   try {
     return JSON.parse(text);

@@ -14,6 +14,7 @@
   --rose2: #e11d48;
   --rose-l: #fff1f2;
   --rose-r: rgba(244,63,94,0.15);
+  --ink: #0a0a0a;
   --emerald: #10b981;
   --r: 16px;
   --r2: 12px;
@@ -111,6 +112,18 @@ body {
 }
 .local-settings.visible { display: block; }
 .local-settings .form-group:last-child { margin-bottom: 0; }
+
+.model-fetch-row { display: flex; gap: 6px; align-items: center; }
+
+.btn-sm-fetch {
+  padding: 7px 12px; font-size: 11px; font-weight: 600;
+  border: 1.5px solid var(--border); border-radius: var(--r3);
+  background: var(--bg); color: var(--text2); cursor: pointer;
+  font-family: inherit; white-space: nowrap;
+  transition: all 0.15s var(--ease);
+}
+.btn-sm-fetch:hover { background: var(--ink); color: #fff; border-color: var(--ink); }
+.btn-sm-fetch:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .settings-actions { padding: 16px 22px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; }
 
