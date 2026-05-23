@@ -123,7 +123,6 @@ async function doRefine(card, suggestion, input) {
     let ep = await get(STORAGE_KEYS.LOCAL_ENDPOINT);
     if (!ep.endsWith('/chat/completions')) ep = ep.replace(/\/+$/, '') + '/chat/completions';
     refineOpts.endpoint = ep;
-    if (!model || model === getDefaultModel('local')) refineOpts.model = await get(STORAGE_KEYS.LOCAL_MODEL);
   }
 
   try {
@@ -241,7 +240,6 @@ async function captureAndSuggest(pointer) {
     let ep = await get(STORAGE_KEYS.LOCAL_ENDPOINT);
     if (!ep.endsWith('/chat/completions')) ep = ep.replace(/\/+$/, '') + '/chat/completions';
     callOpts.endpoint = ep;
-    if (!model || model === getDefaultModel('local')) callOpts.model = await get(STORAGE_KEYS.LOCAL_MODEL);
   }
 
   let systemPrompt = buildSystemPrompt(count, customSys);
@@ -260,6 +258,7 @@ async function captureAndSuggest(pointer) {
     lastPointer = pointer;
     lastResult = result;
     renderCards(result);
+    if (result._model) $('model-badge').textContent = result._model;
     $('latency').textContent = ((Date.now() - captureStartTime) / 1000).toFixed(1) + 's';
     showState('results');
     addRecentCapture({ pointer, suggestionCount: (result.suggestions || []).length, styleProfile: result.style_profile || null });

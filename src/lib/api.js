@@ -12,8 +12,7 @@ const PROVIDERS = {
     },
 
     buildPayload(model, systemPrompt, userPrompt, imageBase64, imageMediaType) {
-      return {
-        model,
+      const payload = {
         messages: [
           { role: 'system', content: systemPrompt },
           {
@@ -31,10 +30,12 @@ const PROVIDERS = {
         temperature: 0.7,
         stream: false
       };
+      if (model) payload.model = model;
+      return payload;
     },
 
     parseResponse(data) {
-      return safeParseJson(data.choices[0].message.content);
+      return { ...safeParseJson(data.choices[0].message.content), _model: data.model };
     }
   },
 
