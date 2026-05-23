@@ -55,6 +55,12 @@ body {
   letter-spacing: -0.03em;
 }
 
+.header-model {
+  font-size: 10px; font-weight: 500; color: var(--text3);
+  background: var(--surface2); padding: 1px 7px; border-radius: 4px;
+  max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
 .header-badge {
   font-size: 10px; font-weight: 600; color: var(--text2);
   background: var(--surface2); padding: 2px 8px; border-radius: 4px;

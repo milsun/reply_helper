@@ -2,16 +2,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const elements = {
     providerSelect: document.getElementById('provider-select'),
     modelSelect: document.getElementById('model-select'),
+    modelHint: document.getElementById('model-hint'),
     apiKeyInput: document.getElementById('api-key-input'),
     apiKeyHint: document.getElementById('api-key-hint'),
     toggleApiKey: document.getElementById('toggle-api-key'),
     localSettings: document.getElementById('local-settings'),
     localEndpointInput: document.getElementById('local-endpoint-input'),
-    modelSelectGroup: document.getElementById('model-select-group'),
-    localModelGroup: document.getElementById('local-model-group'),
-    localModelSelect: document.getElementById('local-model-select'),
-    localModelInput: document.getElementById('local-model-input'),
-    fetchModelsBtn: document.getElementById('fetch-models-btn'),
     suggestionCount: document.getElementById('suggestion-count-range'),
     countDisplay: document.getElementById('count-display'),
     qualityRange: document.getElementById('quality-range'),
@@ -24,10 +20,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   };
 
   let savedApiKey = '';
-  let fetchedModels = [];
 
-  function populateModelSelect(providerKey) {
-    const models = getModelsForProvider(providerKey);
+  function populateModelSelect(models) {
     elements.modelSelect.innerHTML = '';
     models.forEach(model => {
       const option = document.createElement('option');
@@ -37,64 +31,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  function populateLocalModelSelect(models) {
-    elements.localModelSelect.innerHTML = '';
-    models.forEach(model => {
-      const option = document.createElement('option');
-      option.value = model;
-      option.textContent = model;
-      elements.localModelSelect.appendChild(option);
-    });
-    const option = document.createElement('option');
-    option.value = '__custom__';
-    option.textContent = '-- Custom (typed below) --';
-    option.disabled = true;
-    elements.localModelSelect.appendChild(option);
-  }
-
-  async function fetchModels() {
-    elements.fetchModelsBtn.disabled = true;
-    elements.fetchModelsBtn.textContent = '...';
+  async function fetchAndPopulateModels(endpoint) {
     try {
-      let endpoint = elements.localEndpointInput.value.trim();
-      if (!endpoint.endsWith('/chat/completions')) {
-        endpoint = endpoint.replace(/\/+$/, '') + '/chat/completions';
-      }
-      fetchedModels = await fetchLocalModels(endpoint);
-      populateLocalModelSelect(fetchedModels);
-      const currentModel = await get(STORAGE_KEYS.LOCAL_MODEL);
-      if (fetchedModels.includes(currentModel)) {
-        elements.localModelSelect.value = currentModel;
-      } else {
-        elements.localModelSelect.value = fetchedModels[0];
-        elements.localModelInput.value = currentModel;
-      }
-      elements.fetchModelsBtn.textContent = '✓';
-    } catch (e) {
-      elements.fetchModelsBtn.textContent = '✗';
-      showToast('Could not fetch models. Check endpoint.');
-    } finally {
-      setTimeout(() => { elements.fetchModelsBtn.disabled = false; elements.fetchModelsBtn.textContent = 'Fetch'; }, 2000);
+      elements.modelHint.textContent = 'Fetching models...';
+      const models = await fetchLocalModels(endpoint);
+      populateModelSelect(models);
+      elements.modelHint.textContent = `${models.length} model(s) loaded from server`;
+      return models;
+    } catch {
+      const fallback = getModelsForProvider('local');
+      populateModelSelect(fallback);
+      elements.modelHint.textContent = 'Could not reach server — showing defaults';
+      return fallback;
     }
-  }
-
-  function showToast(msg) {
-    const t = document.createElement('div');
-    t.textContent = msg;
-    t.style.cssText = 'position:fixed;bottom:16px;left:50%;transform:translateX(-50%);padding:8px 18px;background:#0a0a0a;color:#fff;font-size:12px;border-radius:8px;z-index:1000;font-family:inherit;';
-    document.body.appendChild(t);
-    setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity 0.3s'; setTimeout(() => t.remove(), 300); }, 2500);
   }
 
   function toggleLocalSettings(providerKey) {
     const isLocal = providerKey === 'local';
     elements.localSettings.classList.toggle('visible', isLocal);
-    elements.modelSelectGroup.style.display = isLocal ? 'none' : '';
-    elements.localModelGroup.style.display = isLocal ? '' : 'none';
     elements.apiKeyHint.textContent = isLocal ? 'Optional — leave empty if no auth is required' : (savedApiKey ? 'API key configured' : 'No API key set');
-    if (isLocal && fetchedModels.length === 0) {
-      populateLocalModelSelect(['gemma-4-E2B-it-UD-Q4_K_XL.gguf']);
-    }
   }
 
   async function loadSettings() {
@@ -102,17 +57,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     const model = await get(STORAGE_KEYS.MODEL);
     savedApiKey = await get(STORAGE_KEYS.API_KEY);
     const localEndpoint = await get(STORAGE_KEYS.LOCAL_ENDPOINT);
-    const localModel = await get(STORAGE_KEYS.LOCAL_MODEL);
     const suggestionCount = await get(STORAGE_KEYS.SUGGESTION_COUNT);
     const quality = await get(STORAGE_KEYS.IMAGE_QUALITY);
     const customSystemPrompt = await get(STORAGE_KEYS.CUSTOM_SYSTEM_PROMPT);
     const customUserTemplate = await get(STORAGE_KEYS.CUSTOM_USER_PROMPT_TEMPLATE);
 
     elements.providerSelect.value = provider;
-    populateModelSelect(provider);
     toggleLocalSettings(provider);
 
-    const availableModels = getModelsForProvider(provider);
+    if (provider === 'local') {
+      await fetchAndPopulateModels(localEndpoint);
+    } else {
+      populateModelSelect(getModelsForProvider(provider));
+      elements.modelHint.textContent = '';
+    }
+
+    const availableModels = [...elements.modelSelect.options].map(o => o.value);
     elements.modelSelect.value = availableModels.includes(model) ? model : availableModels[0];
 
     elements.apiKeyInput.value = savedApiKey;
@@ -121,14 +81,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       : (savedApiKey ? 'API key configured' : 'No API key set');
 
     elements.localEndpointInput.value = localEndpoint;
-    elements.localModelInput.value = localModel;
-
-    if (fetchedModels.includes(localModel)) {
-      elements.localModelSelect.value = localModel;
-    } else {
-      elements.localModelInput.value = localModel;
-    }
-
     elements.suggestionCount.value = suggestionCount;
     elements.countDisplay.textContent = suggestionCount;
     elements.qualityRange.value = Math.round(quality * 100);
@@ -144,9 +96,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   elements.providerSelect.addEventListener('change', async (e) => {
     const provider = e.target.value;
     await saveSetting(STORAGE_KEYS.PROVIDER, provider);
-    populateModelSelect(provider);
     toggleLocalSettings(provider);
-    const defaultModel = getDefaultModel(provider);
+
+    if (provider === 'local') {
+      const endpoint = await get(STORAGE_KEYS.LOCAL_ENDPOINT);
+      await fetchAndPopulateModels(endpoint);
+    } else {
+      populateModelSelect(getModelsForProvider(provider));
+      elements.modelHint.textContent = '';
+    }
+
+    const defaultModel = elements.modelSelect.options[0]?.value || getDefaultModel(provider);
     elements.modelSelect.value = defaultModel;
     await saveSetting(STORAGE_KEYS.MODEL, defaultModel);
 
@@ -157,13 +117,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   elements.modelSelect.addEventListener('change', async (e) => {
     await saveSetting(STORAGE_KEYS.MODEL, e.target.value);
-  });
-
-  elements.localModelSelect.addEventListener('change', async (e) => {
-    if (e.target.value !== '__custom__') {
-      elements.localModelInput.value = e.target.value;
-      await saveSetting(STORAGE_KEYS.LOCAL_MODEL, e.target.value);
-    }
   });
 
   let apiKeyTimer;
@@ -195,17 +148,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       await saveSetting(STORAGE_KEYS.LOCAL_ENDPOINT, val);
     }, 500);
   });
-
-  let localModelTimer;
-  elements.localModelInput.addEventListener('input', () => {
-    clearTimeout(localModelTimer);
-    localModelTimer = setTimeout(async () => {
-      const val = elements.localModelInput.value.trim();
-      await saveSetting(STORAGE_KEYS.LOCAL_MODEL, val || 'gemma-4-E2B-it-UD-Q4_K_XL.gguf');
-    }, 500);
-  });
-
-  elements.fetchModelsBtn.addEventListener('click', fetchModels);
 
   elements.suggestionCount.addEventListener('input', async (e) => {
     const count = parseInt(e.target.value);
@@ -242,7 +184,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   elements.resetBtn.addEventListener('click', async () => {
     await resetToDefaults();
-    fetchedModels = [];
     await loadSettings();
   });
 

@@ -288,5 +288,14 @@ els.thinkingCheck.addEventListener('change', async () => {
 
 document.addEventListener('DOMContentLoaded', async () => {
   els.thinkingCheck.checked = await get(STORAGE_KEYS.ENABLE_THINKING);
+
+  const provider = await get(STORAGE_KEYS.PROVIDER);
+  if (provider === 'local') {
+    const localModel = await get(STORAGE_KEYS.LOCAL_MODEL);
+    $('model-badge').textContent = localModel || await get(STORAGE_KEYS.MODEL);
+  } else {
+    $('model-badge').textContent = await get(STORAGE_KEYS.MODEL);
+  }
+
   if (!await checkPending()) showState('empty');
 });
