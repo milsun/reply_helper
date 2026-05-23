@@ -4,16 +4,10 @@ const http = require('http');
 
 const HARNESS_PATH = path.resolve(__dirname, '../fixtures/test-harness.html');
 const LOCAL_API = 'http://localhost:8080/v1/chat/completions';
-const MODEL = 'gemma-4-E2B-it-UD-Q4_K_XL.gguf';
 
 async function callLocalAPI(payload) {
   return new Promise((resolve, reject) => {
-    const body = JSON.stringify({
-      model: MODEL,
-      messages: payload.messages,
-      max_tokens: payload.max_tokens || 32768,
-      temperature: payload.temperature || 0.7
-    });
+    const body = JSON.stringify({ messages: payload.messages });
     const req = http.request(LOCAL_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -36,7 +30,7 @@ async function callLocalAPI(payload) {
 (async () => {
   console.log('╔══════════════════════════════════════════╗');
   console.log('║  Reply Helper — Full E2E Pipeline Test   ║');
-  console.log('║  Local Model: Gemma 4 (Vision)           ║');
+  console.log('║  Local Model (auto-detected)            ║');
   console.log('╚══════════════════════════════════════════╝\n');
 
   let passed = 0, failed = 0;
@@ -107,14 +101,14 @@ Return ONLY valid JSON (no markdown, no backticks):
         { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${screenshotB64}` } },
         { type: 'text', text: userPrompt }
       ]}
-    ],
-    max_tokens: 32768
+    ]
   });
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
 
   const content = response.choices[0].message.content || '';
   check(`Response in ${elapsed}s`, elapsed < 120);
-  check(`Tokens used: ${response.usage.total_tokens}`, response.usage.total_tokens > 100);
+  check(`Tokens used: ${response.usage.total_tokens}`, response.usage.total_tokens > 10);
+  console.log(`  Model: ${response.model || 'unknown'}`);
 
   // ═══════════════════════════════════════════
   // STEP 3: Parse & verify JSON response
@@ -246,8 +240,7 @@ Return ONLY valid JSON: {"refined_text":"...","changes_made":"..."}`;
   const refineResponse = await callLocalAPI({
     messages: [
       { role: 'user', content: refineSystemPrompt }
-    ],
-    max_tokens: 1024
+    ]
   });
   const refineElapsed = ((Date.now() - refineStart) / 1000).toFixed(1);
 

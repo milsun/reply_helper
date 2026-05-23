@@ -18,17 +18,11 @@ const PROVIDERS = {
           {
             role: 'user',
             content: [
-              {
-                type: 'image_url',
-                image_url: { url: `data:${imageMediaType};base64,${imageBase64}` }
-              },
+              { type: 'image_url', image_url: { url: `data:${imageMediaType};base64,${imageBase64}` } },
               { type: 'text', text: userPrompt }
             ]
           }
-        ],
-        max_tokens: 32768,
-        temperature: 0.7,
-        stream: false
+        ]
       };
       if (model) payload.model = model;
       return payload;
